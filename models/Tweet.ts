@@ -1,4 +1,3 @@
-import { al } from 'react-router/dist/development/route-data-C12CLHiN';
 import { UUID } from 'sequelize';
 import { Table, Column, Model, DataType, PrimaryKey } from 'sequelize-typescript';
 
