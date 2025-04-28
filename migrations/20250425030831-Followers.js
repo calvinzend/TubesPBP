@@ -16,6 +16,7 @@ module.exports = {
           key: 'user_id'
         },
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         allowNull: false
       },
       followerId: {
@@ -25,6 +26,7 @@ module.exports = {
           key: 'user_id'
         },
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         allowNull: false
       },
       followedAt: {
