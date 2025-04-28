@@ -6,11 +6,12 @@ interface PostProps {
     handle: string;
     content: string;
     likes: string;
+    image_path: string;
   }
   
-export const Post = ({ name, handle, content, likes}: PostProps) => {
+export const Post = ({ name, handle, content, likes, image_path}: PostProps) => {
 
-    const parsedLikes = parseInt(likes, 10); // Convert likes to a number
+    const parsedLikes = parseInt(likes, 10);
         if(parsedLikes > 1000) {
             likes = `${(parsedLikes / 1000).toFixed(1)}k`;
         }
@@ -21,12 +22,13 @@ export const Post = ({ name, handle, content, likes}: PostProps) => {
           {/* Header: Avatar + Name + Handle */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <img
-              src="https://assets-a1.kompasiana.com/items/album/2016/09/10/online-illustration-57d36d5e24b0bd96078b4568.jpg"
+              src={image_path}
               alt="profile"
               style={{
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
+                backgroundColor: "white", 
                 objectFit: "cover",
               }}
             />
@@ -40,7 +42,7 @@ export const Post = ({ name, handle, content, likes}: PostProps) => {
             style={{
               fontSize: "20px",
               fontWeight: "bold",
-              marginTop: "8px",
+              marginTop: "2px",
               marginLeft: "52px", 
             }}
           >
