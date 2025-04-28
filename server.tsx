@@ -8,7 +8,8 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { Request, Response, NextFunction } from "express";
 
-dotenv.config(); // Menggunakan .env untuk konfigurasi
+dotenv.config(); 
+
 declare global {
   namespace Express {
     interface Request {
@@ -30,45 +31,44 @@ app.use(cors());
 app.use(express.json());
 
 const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  if (["/login", "/register"].includes(req.path)) {
-    return next(); // Tidak memerlukan otentikasi untuk path tertentu
-  }
+  (async () => {
+      try {
+          if (req.path === "/login" || req.path === "/register" || req.path === "/refresh") {
+              return next();
+          }
 
-  const authorization = req.headers.authorization;
-  if (!authorization) {
-    return res.status(401).json({ error: 'Authorization header missing' });
-  }
+          const authorization = req.headers.authorization;
+          if (!authorization) {
+              return res.status(401).json({ error: 'Authorization header missing' });
+          }
 
-  const token = authorization.split(" ")[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Token missing' });
-  }
+          const token = authorization.split(" ")[1];
+          if (!token) {
+              return res.status(401).json({ error: 'Token missing' });
+          }
 
-  try {
-    const decoded = jwt.verify(token, secretKey) as { userId: string };
-    User.findByPk(decoded.userId)
-      .then((user) => {
-        if (!user) {
-          return res.status(401).json({ error: 'User not found' });
-        }
-        req.user = user;
-        next();
-      })
-      .catch((err) => {
-        console.error("Authentication error:", err);
-        return res.status(401).json({ error: 'Unauthorized - Invalid token' });
-      });
-  } catch (err) {
-    console.error("Authentication error:", err);
-    return res.status(401).json({ error: 'Unauthorized - Invalid token' });
-  }
+          const decoded = jwt.verify(token, secretKey) as { userId: string };
+          const user = await User.findByPk(decoded.userId);
+
+          console.log("Decoded user:", decoded);
+          console.log("User found:", user);
+          
+          if (!user) {
+              return res.status(401).json({ error: 'User not found' });
+          }
+
+          req.user = user;
+          next();
+      } catch (err) {
+          return res.status(401).json({ error: 'Unauthorized - Invalid token' });
+      }
+  })();
 };
+
 
 app.use(authenticate);
 
-/**
- * Register user baru
- */
+
 app.post("/register", async (req, res) => {
   try {
     const { username, password, name, email, profilePicture } = req.body;
@@ -105,7 +105,7 @@ app.post("/login", async (req, res) => {
     if (!username || !password) {
       return res.status(400).json({ error: "Missing username or password" });
     }
-
+  
     const user = await User.findOne({ where: { username } });
 
     if (!user) {
@@ -117,7 +117,7 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: "1h" });
+    const token = jwt.sign({ userId: user.user_id }, secretKey, { expiresIn: "1h" });
 
     res.json({ message: "Login successful", token });
   } catch (error) {
@@ -126,9 +126,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/**
- * Mendapatkan daftar semua user
- */
 app.get("/users", async (req, res) => {
   try {
     const users = await User.findAll();
@@ -139,9 +136,7 @@ app.get("/users", async (req, res) => {
   }
 });
 
-/**
- * Mendapatkan user berdasarkan ID
- */
+
 app.get("/users/:id", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.id);
@@ -155,7 +150,6 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
-// Koneksi ke database
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected.');
