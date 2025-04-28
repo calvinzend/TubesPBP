@@ -4,19 +4,38 @@ import { Post } from "../Komponen/Post";
 export const UserPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [userData, setUserData] = useState<any>(null); // State untuk user data
 
   const handleResize = () => {
     setIsMobile(window.innerWidth <= 768);
   };
 
   useEffect(() => {
-    handleResize(); // initial
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    // Fetch user data
+    const fetchUser = async () => {
+      try {
+        const response = await fetch("http://localhost:3000/users/f3dce0fb-aa54-448d-95c3-d604eb960bea");
+        const data = await response.json();
+        setUserData(data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
+
   const handleEditClick = () => setShowModal(true);
   const handleClose = () => setShowModal(false);
+
+  if (!userData) {
+    return <div style={{ color: "white", textAlign: "center" }}>Error...</div>;
+  }
 
   return (
     <div
@@ -47,25 +66,26 @@ export const UserPage = () => {
           }}
         >
           <img
-            src="https://lh3.googleusercontent.com/a/ACg8ocLihsMYXGToQWPmN1-EGICbOWTS0CfgBsyO-HG3iCGyYJffhsA=s432-c-no"
+            src={userData.profilePicture || "default-profile.png"}
             alt="profile"
             style={{
               width: "120px",
               height: "120px",
               borderRadius: "50%",
-              backgroundColor: "gray",
+              backgroundColor: "white",
               objectFit: "cover",
             }}
           />
+          <p>{userData.profile_picture}</p>
           <div>
-            <div style={{ fontSize: "20px", fontWeight: "bold" }}>calvinzend</div>
-            <div style={{ color: "#ccc" }}>@CalvinEstanto</div>
+            <div style={{ fontSize: "20px", fontWeight: "bold" }}>{userData.name}</div>
+            <div style={{ color: "#ccc" }}>@{userData.username}</div>
             <div style={{ marginTop: "8px" }}>
               <span style={{ marginRight: "20px" }}>200 following</span>
               <span>200 followers</span>
             </div>
             <div style={{ marginTop: "8px", fontSize: "12px" }}>
-              Orang bandung aku mah
+              {userData.bio}
             </div>
             <div style={{ marginTop: "20px" }}>
               <button
@@ -106,10 +126,11 @@ export const UserPage = () => {
       {/* Post Section */}
       <div style={{ marginTop: "40px" }}>
         <Post
-          name="Calvin Estanto"
-          handle="@calvinzend"
+          name={userData.name}
+          handle={`@${userData.username}`}
           content="Semangat banget belajar React!"
           likes="100000"
+          image_path={userData.profilePicture || "default-profile.png"}
         />
       </div>
 
@@ -144,6 +165,7 @@ export const UserPage = () => {
             <input
               type="text"
               placeholder="Name"
+              defaultValue={userData.name}
               style={{
                 marginTop: "20px",
                 padding: "10px",
@@ -157,6 +179,7 @@ export const UserPage = () => {
             <input
               type="text"
               placeholder="Bio"
+              defaultValue={userData.bio}
               style={{
                 marginTop: "20px",
                 padding: "10px",

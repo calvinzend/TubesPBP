@@ -12,6 +12,7 @@
   "dependencies": {
     "@mui/icons-material": "^7.0.2",
     "@types/express": "^5.0.1",
+    "cors": "^2.8.5",
     "express": "^5.1.0",
     "pg": "^8.15.6",
     "pg-hstore": "^2.3.4",
@@ -25,6 +26,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react-swc": "^3.8.0",
