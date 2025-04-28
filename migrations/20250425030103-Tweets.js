@@ -16,6 +16,7 @@ module.exports = {
           key: 'user_id'
         },
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         allowNull: false
       },
       content: {
@@ -33,6 +34,7 @@ module.exports = {
           key: 'tweet_id'
         },
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         allowNull: true
       },
       createdAt: {
