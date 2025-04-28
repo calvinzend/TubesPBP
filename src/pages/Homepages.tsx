@@ -44,12 +44,14 @@ export const HomePage = () => {
         handle="@bostonmnl"
         content="Hallo kamu!!!!!!!!!!!!!!"
         likes="10"
+        image_path="https://lh3.googleusercontent.com/a/ACg8ocLihsMYXGToQWPmN1-EGICbOWTS0CfgBsyO-HG3iCGyYJffhsA=s432-c-no"
       />
       <Post
         name="hannah_debora"
         handle="@hannahdebora"
         content="Lagi Kerjain Tubes"
         likes="10"
+        image_path="https://lh3.googleusercontent.com/a/ACg8ocLihsMYXGToQWPmN1-EGICbOWTS0CfgBsyO-HG3iCGyYJffhsA=s432-c-no"
       />
       
     </div>
