@@ -3,10 +3,13 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import { Sequelize } from 'sequelize-typescript';
 import { User } from './models/User';
+import { Tweet } from './models/Tweet';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { Request, Response, NextFunction } from "express";
+import multer from 'multer';
+import path from 'path';
 
 dotenv.config(); 
 
@@ -23,10 +26,20 @@ const secretKey = process.env.JWT_SECRET || 'your_secret_key';
 
 const sequelize = new Sequelize({
   ...config.development,
-  models: [User],
+  models: [User,   Tweet],
 });
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); 
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname)); // Generate a unique file name
+  },
+});
+const upload = multer({ storage: storage });
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
@@ -68,13 +81,17 @@ const authenticate = (req: Request, res: Response, next: NextFunction) => {
 
 app.use(authenticate);
 
-
-app.post("/register", async (req, res) => {
+app.post("/register", upload.single('profilePicture'), async (req: Request, res: Response) => {
   try {
-    const { username, password, name, email, profilePicture } = req.body;
+    console.log('req.body:', req.body); // <-- Tambahkan ini
+    console.log('req.file:', req.file);
 
-    if (!username || !password || !email) {
-      return res.status(400).json({ error: "Missing required fields" });
+
+    const { username, password, name, email } = req.body;
+    const file = req.file; 
+
+    if (!username || !password || !name || !email) {
+      return res.status(400).json({ error: "Semua field wajib diisi!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -85,15 +102,16 @@ app.post("/register", async (req, res) => {
       password: hashedPassword,
       name,
       email,
-      profilePicture: profilePicture || null,
+      profilePicture: file ? file.path : null,
     });
 
-    res.status(201).json({ message: "User created successfully", user });
+    res.status(201).json({ message: "User created successfully" });
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 
 /**
  * Login user
@@ -135,6 +153,83 @@ app.get("/users", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+app.put("/users/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { username, password, name, email,bio } = req.body;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (username) user.username = username;
+    if (password) user.password = await bcrypt.hash(password, 10);
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (bio) user.bio = bio;
+
+    await user.save();
+    res.json({ message: "User updated successfully" });
+  }catch (error) {
+    console.error("Error updating user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
+
+
+//Uji coba
+app.get("/posts", async (req, res) => {
+  
+  try {
+    const posts = await Tweet.findAll();
+    res.json(posts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }});
+
+app.get("/posts/user/:id", async (req, res) => {
+  
+  try {
+    const user = await User.findByPk(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const posts = await Tweet.findAll({ where: { user_id: user.user_id } });
+    res.json(posts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }});
+
+
+app.post("/posts", async (req, res) => {
+  
+  try {
+    const { title, content, authorName } = req.body;
+    const userId = req.user?.user_id; 
+
+    if (!title || !content || !authorName) {
+      return res.status(400).json({ error: "Missing title, content, or authorName" });
+    }
+
+    const post = await Tweet.create({
+      post_id: uuidv4(),
+      title,
+      content,
+      authorName,
+      userId,
+    });
+
+    res.status(201).json(post);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+})
 
 
 app.get("/users/:id", async (req, res) => {

@@ -4,20 +4,19 @@ import { FaSquareXTwitter } from "react-icons/fa6";
 
 export const Login = () => {
   const navigate = useNavigate();
-  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [username, setUsernameOrEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Mengirim data login ke API lokal
+    
     const loginData = {
-      usernameOrEmail,
+      username,
       password,
     };
 
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      const response = await fetch("http://localhost:3000/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -85,7 +84,7 @@ export const Login = () => {
             <input
               type="text"
               placeholder="Email atau Username"
-              value={usernameOrEmail}
+              value={username}
               onChange={(e) => setUsernameOrEmail(e.target.value)}
               required
               style={{

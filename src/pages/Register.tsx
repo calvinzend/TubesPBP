@@ -15,15 +15,15 @@ export const Register = () => {
 
     const formData = new FormData();
     formData.append("username", username);
+    formData.append("password", password);
     formData.append("name", name);
     formData.append("email", email);
-    formData.append("password", password);
     if (image) formData.append("profilePicture", image);
 
     try {
-      const response = await fetch("http://localhost:5000/register", {
+      const response = await fetch("http://localhost:3000/register", {
         method: "POST",
-        body: formData,
+        body: formData, // Kirim formData
       });
 
       if (response.ok) {

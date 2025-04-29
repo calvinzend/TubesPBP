@@ -1,11 +1,12 @@
 import { Sequelize } from "sequelize-typescript";
 import { User } from "./models/User";
+import { Tweet } from "./models/Tweet";
 const config = require("./config/config.json");
 import { v4 } from "uuid";
 
 const sequelize = new Sequelize({
     ...config.development,
-    models: [User],
+    models: [Tweet],
   });
 
   const users = [
@@ -62,11 +63,60 @@ const sequelize = new Sequelize({
   ]
 
 
+  const posts = [
+    {
+            
+           tweet_id: v4(),
+            user_id: "5395e4a9-37b3-4ba5-943d-b0ccd1f49bd8",
+            content: "Hello, I'm Calvin",
+            image_path: "",
+            createdAt: new Date(),
+        },
+        {
+           tweet_id: v4(),
+            user_id: "5395e4a9-37b3-4ba5-943d-b0ccd1f49bd8",
+            content: "Hello, I'm Boston",
+            image_path: "",
+            createdAt: new Date(),
+        },
+        {
+           tweet_id: v4(),
+            user_id: "5395e4a9-37b3-4ba5-943d-b0ccd1f49bd8",
+            content: "Hello, I'm Jochal",
+            image_path: "",
+            createdAt: new Date(),
+        },
+        {
+           tweet_id: v4(),
+            user_id: "5395e4a9-37b3-4ba5-943d-b0ccd1f49bd8",
+            content: "Hello, I'm Felix",
+            image_path: "",
+            createdAt: new Date(),
+        },
+        {
+           tweet_id: v4(),
+            user_id: "5395e4a9-37b3-4ba5-943d-b0ccd1f49bd8",
+            content: "Hello, I'm Jopaul",
+            image_path: "",
+            createdAt: new Date(),
+        },
+]
+
+
+//   async function start() {
+//     await sequelize.sync({ force: true }); 
+//     await User.bulkCreate(users); 
+
+//     const { count, rows } = await User.findAndCountAll();
+//     console.log("Total Tasks:", count);
+//     console.log("Data Tasks:", JSON.stringify(rows, null, 2));
+
+// }
   async function start() {
     await sequelize.sync({ force: true }); 
-    await User.bulkCreate(users); 
+    await Tweet.bulkCreate(posts); 
 
-    const { count, rows } = await User.findAndCountAll();
+    const { count, rows } = await Tweet.findAndCountAll();
     console.log("Total Tasks:", count);
     console.log("Data Tasks:", JSON.stringify(rows, null, 2));
 

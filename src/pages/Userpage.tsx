@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { Post } from "../Komponen/Post";
+import {jwtDecode} from "jwt-decode";
+
+interface DecodedToken {
+  userId: string;
+  exp: number;
+  iat: number;
+}
 
 export const UserPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [userData, setUserData] = useState<any>(null); // State untuk user data
+  const [userData, setUserData] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const handleResize = () => {
     setIsMobile(window.innerWidth <= 768);
@@ -17,10 +25,23 @@ export const UserPage = () => {
   }, []);
 
   useEffect(() => {
-    // Fetch user data
+    const token = localStorage.getItem("token");
+    if (token) {
+      const decoded = jwtDecode<DecodedToken>(token);
+      setUserId(decoded.userId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+
     const fetchUser = async () => {
       try {
-        const response = await fetch("http://localhost:3000/users/f3dce0fb-aa54-448d-95c3-d604eb960bea");
+        const response = await fetch(`http://localhost:3000/users/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
         const data = await response.json();
         setUserData(data);
       } catch (error) {
@@ -28,10 +49,53 @@ export const UserPage = () => {
       }
     };
     fetchUser();
-  }, []);
+  }, [userId]);
 
   const handleEditClick = () => setShowModal(true);
   const handleClose = () => setShowModal(false);
+
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchPosts = async () => {
+      try {
+        const response = await fetch(`http://localhost:3000/posts/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await response.json();
+        setUserPosts(data);
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+    };
+
+    fetchPosts();
+  }, [userId]);
+
+
+  const [updatedUser, setUpdatedUser] = useState<any>(null);
+
+  const updateUser = async () =>{
+    try {
+      const response = await fetch(`http://localhost:3000/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(updatedUser),
+      });
+      if (!response.ok) throw new Error("Failed to update user");
+      const data = await response.json();
+      setUserData(data);
+    } catch (error) {
+      console.error("Error updating user:", error);
+    }
+  } 
 
   if (!userData) {
     return <div style={{ color: "white", textAlign: "center" }}>Error...</div>;
@@ -46,6 +110,7 @@ export const UserPage = () => {
         minHeight: "100vh",
       }}
     >
+     
       {/* Profile Header */}
       <div
         style={{
@@ -125,13 +190,20 @@ export const UserPage = () => {
 
       {/* Post Section */}
       <div style={{ marginTop: "40px" }}>
-        <Post
-          name={userData.name}
-          handle={`@${userData.username}`}
-          content="Semangat banget belajar React!"
-          likes="100000"
-          image_path={userData.profilePicture || "default-profile.png"}
-        />
+        {userPosts.length > 0 ? (
+          userPosts.map((post) => (
+            <Post
+              key={post.id} // penting buat React
+              name={userData.name}
+              handle={`@${userData.username}`}
+              content={post.content}
+              likes={post.likes || 0}
+              image_path={userData.profilePicture || "default-profile.png"}
+            />
+          ))
+        ) : (
+          <p style={{ textAlign: "center", color: "#aaa" }}>Belum ada postingan.</p>
+        )}
       </div>
 
       {/* Edit Modal */}
@@ -164,32 +236,44 @@ export const UserPage = () => {
             <h2>Edit Profile</h2>
             <input
               type="text"
-              placeholder="Name"
-              defaultValue={userData.name}
-              style={{
-                marginTop: "20px",
-                padding: "10px",
-                width: "100%",
-                borderRadius: "10px",
-                border: "1px solid #555",
-                backgroundColor: "#333",
-                color: "white",
-              }}
+              placeholder="Username"
+              defaultValue={userData.username}
+              onChange={(e) =>
+                setUpdatedUser((prev: any) => ({ ...prev, username: e.target.value }))
+              }
             />
             <input
-              type="text"
-              placeholder="Bio"
-              defaultValue={userData.bio}
-              style={{
-                marginTop: "20px",
-                padding: "10px",
-                width: "100%",
-                borderRadius: "10px",
-                border: "1px solid #555",
-                backgroundColor: "#333",
-                color: "white",
-              }}
-            />
+                type="text"
+                placeholder="Name"
+                defaultValue={userData.name}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, name: e.target.value }))
+                }
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
+                }
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                defaultValue={userData.email}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, email: e.target.value }))
+                }
+              />
+              <input
+                type="text"
+                placeholder="Bio"
+                defaultValue={userData.bio}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, bio: e.target.value }))
+                }
+              />
+
             <div
               style={{
                 marginTop: "20px",

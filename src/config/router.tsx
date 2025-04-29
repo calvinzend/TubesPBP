@@ -8,7 +8,7 @@ import { Register } from "../pages/Register";
 
 const authenticate = () => {
   const token = localStorage.getItem("token");
-  if (token) { // edit disni
+  if (!token) { 
     return redirect("/login");
   }
 };
