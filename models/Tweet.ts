@@ -1,5 +1,5 @@
 import { UUID } from 'sequelize';
-import { Table, Column, Model, DataType, PrimaryKey } from 'sequelize-typescript';
+import { Table, Column, Model, DataType } from 'sequelize-typescript';
 
 @Table({
     tableName: "tweets",
@@ -20,7 +20,8 @@ export class Tweet extends Model {
             model: 'users',
             key: 'user_id'
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
     })
     declare user_id: string;
     @Column({
@@ -40,7 +41,8 @@ export class Tweet extends Model {
             model: 'tweets',
             key: 'tweet_id'
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE'
     })
     declare reply_id: string;
     @Column({

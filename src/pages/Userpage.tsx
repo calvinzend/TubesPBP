@@ -97,6 +97,25 @@ export const UserPage = () => {
     }
   } 
 
+  const likePost = async (tweetId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/like/${tweetId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      if (!response.ok) throw new Error("Failed to like post");
+      const data = await response.json();
+      setUserPosts((prevPosts) =>
+        prevPosts.map((post) => (post.id === tweetId ? { ...post, likes: data.likes } : post))
+      );
+    } catch (error) {
+      console.error("Error liking post:", error);
+    }
+  };
+
   if (!userData) {
     return <div style={{ color: "white", textAlign: "center" }}>Error...</div>;
   }
@@ -197,7 +216,7 @@ export const UserPage = () => {
               name={userData.name}
               handle={`@${userData.username}`}
               content={post.content}
-              likes={post.likes || 0}
+              likes={likePost || 0}
               image_path={userData.profilePicture || "default-profile.png"}
             />
           ))

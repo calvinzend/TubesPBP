@@ -1,17 +1,21 @@
 import express from 'express';
 import cors from 'cors';
-import { v4 as uuidv4 } from 'uuid';
-import { Sequelize } from 'sequelize-typescript';
-import { User } from './models/User';
-import { Tweet } from './models/Tweet';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { Request, Response, NextFunction } from "express";
 import multer from 'multer';
 import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
+import { Sequelize } from 'sequelize-typescript';
+import { User } from './models/User';
+import { Request, Response, NextFunction } from "express";
+import { Follower } from './models/Follower';
+import { Likes } from './models/Likes';
+import { Op } from 'sequelize';
+import { create } from 'domain';
+import { Tweet } from './models/Tweet';
 
-dotenv.config(); 
+dotenv.config();
 
 declare global {
   namespace Express {
@@ -26,60 +30,63 @@ const secretKey = process.env.JWT_SECRET || 'your_secret_key';
 
 const sequelize = new Sequelize({
   ...config.development,
-  models: [User,   Tweet],
+  models: [User],
 });
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/"); 
+    cb(null, "uploads/");
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname)); // Generate a unique file name
   },
 });
 const upload = multer({ storage: storage });
-const app = express();
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 
+// ===================Autentication==================//
+
 const authenticate = (req: Request, res: Response, next: NextFunction) => {
   (async () => {
-      try {
-          if (req.path === "/login" || req.path === "/register" || req.path === "/refresh") {
-              return next();
-          }
-
-          const authorization = req.headers.authorization;
-          if (!authorization) {
-              return res.status(401).json({ error: 'Authorization header missing' });
-          }
-
-          const token = authorization.split(" ")[1];
-          if (!token) {
-              return res.status(401).json({ error: 'Token missing' });
-          }
-
-          const decoded = jwt.verify(token, secretKey) as { userId: string };
-          const user = await User.findByPk(decoded.userId);
-
-          console.log("Decoded user:", decoded);
-          console.log("User found:", user);
-          
-          if (!user) {
-              return res.status(401).json({ error: 'User not found' });
-          }
-
-          req.user = user;
-          next();
-      } catch (err) {
-          return res.status(401).json({ error: 'Unauthorized - Invalid token' });
+    try {
+      if (req.path === "/login" || req.path === "/register" || req.path === "/refresh") {
+        return next();
       }
+
+      const authorization = req.headers.authorization;
+      if (!authorization) {
+        return res.status(401).json({ error: 'Authorization header missing' });
+      }
+
+      const token = authorization.split(" ")[1];
+      if (!token) {
+        return res.status(401).json({ error: 'Token missing' });
+      }
+
+      const decoded = jwt.verify(token, secretKey) as { userId: string };
+      const user = await User.findByPk(decoded.userId);
+
+      console.log("Decoded user:", decoded);
+      console.log("User found:", user);
+
+      if (!user) {
+        return res.status(401).json({ error: 'User not found' });
+      }
+
+      req.user = user;
+      next();
+    } catch (err) {
+      return res.status(401).json({ error: 'Unauthorized - Invalid token' });
+    }
   })();
 };
 
 
 app.use(authenticate);
+
 
 app.post("/register", upload.single('profilePicture'), async (req: Request, res: Response) => {
   try {
@@ -88,7 +95,7 @@ app.post("/register", upload.single('profilePicture'), async (req: Request, res:
 
 
     const { username, password, name, email } = req.body;
-    const file = req.file; 
+    const file = req.file;
 
     if (!username || !password || !name || !email) {
       return res.status(400).json({ error: "Semua field wajib diisi!" });
@@ -112,19 +119,27 @@ app.post("/register", upload.single('profilePicture'), async (req: Request, res:
   }
 });
 
-
 /**
  * Login user
  */
 app.post("/login", async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, email, password } = req.body;
 
-    if (!username || !password) {
-      return res.status(400).json({ error: "Missing username or password" });
+    const loginIdentifier = username || email; // Support both fields
+    if (!loginIdentifier || !password) {
+      return res.status(400).json({ error: "Missing username/email or password" });
     }
-  
-    const user = await User.findOne({ where: { username } });
+
+    // Find user by username or email
+    const user = await User.findOne({
+      where: {
+        [Op.or]: [
+          { username: loginIdentifier },
+          { email: loginIdentifier }
+        ]
+      }
+    });
 
     if (!user) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -144,6 +159,8 @@ app.post("/login", async (req, res) => {
   }
 });
 
+//==================GETTERS==================//
+
 app.get("/users", async (req, res) => {
   try {
     const users = await User.findAll();
@@ -153,83 +170,6 @@ app.get("/users", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-app.put("/users/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const { username, password, name, email,bio } = req.body;
-
-    const user = await User.findByPk(userId);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    if (username) user.username = username;
-    if (password) user.password = await bcrypt.hash(password, 10);
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (bio) user.bio = bio;
-
-    await user.save();
-    res.json({ message: "User updated successfully" });
-  }catch (error) {
-    console.error("Error updating user:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-})
-
-
-//Uji coba
-app.get("/posts", async (req, res) => {
-  
-  try {
-    const posts = await Tweet.findAll();
-    res.json(posts);
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }});
-
-app.get("/posts/user/:id", async (req, res) => {
-  
-  try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const posts = await Tweet.findAll({ where: { user_id: user.user_id } });
-    res.json(posts);
-  } catch (error) {
-    console.error("Error fetching posts:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }});
-
-
-app.post("/posts", async (req, res) => {
-  
-  try {
-    const { title, content, authorName } = req.body;
-    const userId = req.user?.user_id; 
-
-    if (!title || !content || !authorName) {
-      return res.status(400).json({ error: "Missing title, content, or authorName" });
-    }
-
-    const post = await Tweet.create({
-      post_id: uuidv4(),
-      title,
-      content,
-      authorName,
-      userId,
-    });
-
-    res.status(201).json(post);
-  } catch (error) {
-    console.error("Error creating post:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-})
 
 
 app.get("/users/:id", async (req, res) => {
@@ -245,6 +185,165 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
+app.get("/posts", async (req, res) => {
+  try {
+    const posts = await Tweet.findAll();
+    res.json(posts);
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+app.get("/posts/:id", async (req, res) => {
+  try {
+    const post = await Tweet.findByPk(req.params.id);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    res.json(post);
+  } catch (error) {
+    console.error("Error fetching post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/posts/user/:userId", async (req, res) => {
+  try {
+    const posts = await Tweet.findAll({ where: { userId: req.params.userId } });
+    res.json(posts);
+  } catch (error) {
+    console.error("Error fetching posts by user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/followers/:userId", async (req, res) => {
+  try {
+    // Find all followers of the user
+    const followers = await Follower.findAll({
+      where: { userId: req.params.userId },
+      include: [{
+        model: User,
+        as: 'follower', // this should match the alias defined in your User model relationship
+        attributes: ['user_id', 'username'] // specify the fields you want to return from the User model
+      }]
+    });
+
+    if (!followers || followers.length === 0) {
+      return res.status(404).json({ error: "No followers found" });
+    }
+
+    // Extract and return only the follower's data
+    const followerData = followers.map(follower => follower.followerId);
+    res.json(followerData); // Return just the follower data
+  } catch (error) {
+    console.error("Error fetching followers:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/following/:userId", async (req, res) => {
+  try {
+    // Find all users the current user is following
+    const following = await Follower.findAll({
+      where: { followerId: req.params.userId },
+      include: [{
+        model: User,
+        as: 'user', // this should match the alias defined in your User model relationship
+        attributes: ['user_id', 'username'] // specify fields to return
+      }]
+    });
+
+    if (!following || following.length === 0) {
+      return res.status(404).json({ error: "No following found" });
+    }
+
+    // Extract and return only the data of users the current user is following
+    const followingData = following.map(entry => entry.user);
+    res.json(followingData);
+  } catch (error) {
+    console.error("Error fetching following:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//==================POSTS==================//
+app.post("/posts", async (req, res) => {
+  try {
+    const { content, image_path, reply_id } = req.body;
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (!content) {
+      return res.status(400).json({ error: "Content is required" });
+    }
+
+    const tweet = await Tweet.create({
+      tweet_id: uuidv4(),
+      user_id: userId,
+      content,
+      image_path : image_path || null,
+      reply_id : reply_id || null,
+    });
+
+    res.status(201).json(tweet);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/like/:tweetId", async (req, res) => {
+  try {
+    const { tweetId } = req.params;
+    const userId = req.user?.user_id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const tweet = await Tweet.findByPk(tweetId);
+    if (!tweet) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Check if the user has already liked the tweet
+    const like = await Likes.toggleLike(userId, tweetId);
+    const countLike = await Likes.count({
+      where: { tweetId: tweetId },
+    });
+
+    res.status(200).json({ message: "Post liked successfully", countLike });
+  } catch (error) {
+    console.error("Error liking post:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.post("/follow/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const followerId = req.user?.user_id;
+
+    if (!followerId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    // mending cek user follow dirinya sendiri disini atau di model?
+    // Check if the user is already followed
+    const follow = await Follower.toggleLike(followerId, userId);
+
+    res.status(200).json({ message: "User followed successfully" });
+  } catch (error) {
+    console.error("Error following user:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//==================Autenticate==================//
 sequelize.authenticate()
   .then(() => {
     console.log('Database connected.');
