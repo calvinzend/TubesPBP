@@ -30,8 +30,10 @@ const secretKey = process.env.JWT_SECRET || 'your_secret_key';
 
 const sequelize = new Sequelize({
   ...config.development,
-  models: [User],
+  models: [User, Tweet, Follower, Likes],
 });
+User.hasMany(Tweet, { foreignKey: 'user_id' });
+Tweet.belongsTo(User, { foreignKey: 'user_id' });
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -46,6 +48,8 @@ const upload = multer({ storage: storage });
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // ===================Autentication==================//
 
@@ -185,9 +189,16 @@ app.get("/users/:id", async (req, res) => {
   }
 });
 
+
 app.get("/posts", async (req, res) => {
   try {
-    const posts = await Tweet.findAll();
+    const posts = await Tweet.findAll({
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'], 
+      },
+      order: [['createdAt', 'DESC']], // Order by createdAt in descending order
+    });
     res.json(posts);
   } catch (error) {
     console.error("Error fetching posts:", error);
@@ -209,9 +220,9 @@ app.get("/posts/:id", async (req, res) => {
   }
 });
 
-app.get("/posts/user/:userId", async (req, res) => {
+app.get("/posts/user/:user_id", async (req, res) => {
   try {
-    const posts = await Tweet.findAll({ where: { userId: req.params.userId } });
+    const posts = await Tweet.findAll({ where: { user_id: req.params.user_id } });
     res.json(posts);
   } catch (error) {
     console.error("Error fetching posts by user:", error);
@@ -272,22 +283,18 @@ app.get("/following/:userId", async (req, res) => {
 //==================POSTS==================//
 app.post("/posts", async (req, res) => {
   try {
-    const { content, image_path, reply_id } = req.body;
-    const userId = req.user?.user_id;
-
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    const { user_id,content, image_path } = req.body;
+ 
     if (!content) {
       return res.status(400).json({ error: "Content is required" });
     }
 
     const tweet = await Tweet.create({
       tweet_id: uuidv4(),
-      user_id: userId,
-      content,
+      user_id: user_id,
+      content : content,
       image_path : image_path || null,
-      reply_id : reply_id || null,
+      reply_id : null,
     });
 
     res.status(201).json(tweet);

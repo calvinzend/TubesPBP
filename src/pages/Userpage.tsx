@@ -117,7 +117,7 @@ export const UserPage = () => {
   };
 
   if (!userData) {
-    return <div style={{ color: "white", textAlign: "center" }}>Error...</div>;
+    return <div style={{ color: "white", textAlign: "center" }}>Loading...</div>;
   }
 
   return (
@@ -216,7 +216,7 @@ export const UserPage = () => {
               name={userData.name}
               handle={`@${userData.username}`}
               content={post.content}
-              likes={likePost || 0}
+              likes={post.likes || "0"}
               image_path={userData.profilePicture || "default-profile.png"}
             />
           ))
@@ -246,7 +246,7 @@ export const UserPage = () => {
               backgroundColor: "#1e1e1e",
               padding: "30px",
               borderRadius: "20px",
-              width: "90%",
+              width: "100%",
               maxWidth: "400px",
               color: "white",
               textAlign: "center",
@@ -260,6 +260,15 @@ export const UserPage = () => {
               onChange={(e) =>
                 setUpdatedUser((prev: any) => ({ ...prev, username: e.target.value }))
               }
+              style={{
+                width: "100%",
+                padding: "10px",
+                marginBottom: "10px",
+                borderRadius: "8px",
+                border: "1px solid #ccc",
+                backgroundColor: "#2e2e2e",
+                color: "white",
+              }}
             />
             <input
                 type="text"
@@ -268,6 +277,15 @@ export const UserPage = () => {
                 onChange={(e) =>
                   setUpdatedUser((prev: any) => ({ ...prev, name: e.target.value }))
                 }
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                marginBottom: "10px",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  backgroundColor: "#2e2e2e",
+                  color: "white",
+                }}
               />
               <input
                 type="password"
@@ -275,6 +293,16 @@ export const UserPage = () => {
                 onChange={(e) =>
                   setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
                 }
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  borderRadius: "8px",
+                marginBottom: "10px",
+
+                  border: "1px solid #ccc",
+                  backgroundColor: "#2e2e2e",
+                  color: "white",
+                }}
               />
               <input
                 type="email"
@@ -283,6 +311,16 @@ export const UserPage = () => {
                 onChange={(e) =>
                   setUpdatedUser((prev: any) => ({ ...prev, email: e.target.value }))
                 }
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                marginBottom: "10px",
+
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  backgroundColor: "#2e2e2e",
+                  color: "white",
+                }}
               />
               <input
                 type="text"
@@ -291,6 +329,15 @@ export const UserPage = () => {
                 onChange={(e) =>
                   setUpdatedUser((prev: any) => ({ ...prev, bio: e.target.value }))
                 }
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                marginBottom: "10px",
+                  borderRadius: "8px",
+                  border: "1px solid #ccc",
+                  backgroundColor: "#2e2e2e",
+                  color: "white",
+                }}
               />
 
             <div

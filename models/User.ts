@@ -1,6 +1,8 @@
 import { UUID } from 'sequelize';
 import { Table, Column, Model, DataType, PrimaryKey, AllowNull } from 'sequelize-typescript';
 
+
+
 @Table({
     tableName: "users",
     timestamps: true,
@@ -49,4 +51,7 @@ export class User extends Model {
         allowNull: false
     })
     declare createdAt: Date;
+
+
+    
 }

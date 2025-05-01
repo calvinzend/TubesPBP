@@ -1,22 +1,27 @@
-import { createBrowserRouter, redirect } from "react-router";
+import { createBrowserRouter, redirect } from "react-router-dom";
 import { Layout } from "../Komponen/Layout";
 import { HomePage } from "../pages/Homepages";
 import { SearchPage } from "../pages/Searchpage";
 import { UserPage } from "../pages/Userpage";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
+import { ProtectedRoute } from "./ProtectedRoute";
 
 const authenticate = () => {
   const token = localStorage.getItem("token");
   if (!token) { 
     return redirect("/login");
   }
-};
+};    
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <Layout />,
+    element: (
+      <ProtectedRoute>
+        <Layout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,
