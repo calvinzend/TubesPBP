@@ -195,7 +195,7 @@ app.get("/posts", async (req, res) => {
     const posts = await Tweet.findAll({
       include: {
         model: User,
-        attributes: ['name', 'username', 'profilePicture'], 
+        attributes: ['name', 'username', 'profilePicture'],
       },
       order: [['createdAt', 'DESC']], // Order by createdAt in descending order
     });
@@ -283,8 +283,8 @@ app.get("/following/:userId", async (req, res) => {
 //==================POSTS==================//
 app.post("/posts", async (req, res) => {
   try {
-    const { user_id,content, image_path } = req.body;
- 
+    const { user_id, content, image_path } = req.body;
+
     if (!content) {
       return res.status(400).json({ error: "Content is required" });
     }
@@ -292,9 +292,9 @@ app.post("/posts", async (req, res) => {
     const tweet = await Tweet.create({
       tweet_id: uuidv4(),
       user_id: user_id,
-      content : content,
-      image_path : image_path || null,
-      reply_id : null,
+      content: content,
+      image_path: image_path || null,
+      reply_id: null,
     });
 
     res.status(201).json(tweet);
@@ -304,49 +304,72 @@ app.post("/posts", async (req, res) => {
   }
 });
 
-app.post("/like/:tweetId", async (req, res) => {
+app.post("/like/:tweet_id", async (req, res) => {
   try {
-    const { tweetId } = req.params;
-    const userId = req.user?.user_id;
+    const { tweet_id } = req.params;
+    const { user_id } = req.body;
 
-    if (!userId) {
+    if (!user_id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const tweet = await Tweet.findByPk(tweetId);
+    const tweet = await Tweet.findByPk(tweet_id);
     if (!tweet) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Check if the user has already liked the tweet
-    const like = await Likes.toggleLike(userId, tweetId);
-    const countLike = await Likes.count({
-      where: { tweetId: tweetId },
-    });
+    const existingLike = await Likes.findOne({ where: { user_id, tweet_id } });
 
-    res.status(200).json({ message: "Post liked successfully", countLike });
+    if (existingLike) {
+      await existingLike.destroy();
+      const countLike = await Likes.count({ where: { tweet_id } });
+      return res.status(200).json({ liked: false, message: "Post unliked successfully", countLike });
+    } else {
+      await Likes.create({
+        like_id: uuidv4(),
+        user_id,
+        tweet_id,
+        likedAt: new Date(),
+      });
+      // Add the like to the Likes table
+      const countLike = await Likes.count({ where: { tweet_id } });
+      return res.status(200).json({ liked: true, message: "Post liked successfully", countLike });
+    }
   } catch (error) {
     console.error("Error liking post:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-app.post("/follow/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const followerId = req.user?.user_id;
 
-    if (!followerId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    // mending cek user follow dirinya sendiri disini atau di model?
-    // Check if the user is already followed
-    const follow = await Follower.toggleLike(followerId, userId);
+app.post("/follow/:follower_id", async (req, res) => {
+  const { follower_id } = req.params;  // follower_id is the user who wants to follow
+  const { user_id } = req.body;         // user_id is the user who is being followed
 
-    res.status(200).json({ message: "User followed successfully" });
-  } catch (error) {
-    console.error("Error following user:", error);
-    res.status(500).json({ error: "Internal server error" });
+  //  Check if the user is authenticated
+  if (follower_id !== req.user?.user_id) {
+    return res.status(403).json({ error: "You are not authorized to follow this user." });
+  }
+
+  // Prevent a user from following themselves
+  if ( follower_id === user_id) {
+    throw new Error("A user cannot follow themselves.");
+  }
+
+  const existingFollower = await Follower.findOne({ where: { user_id, follower_id } });
+
+  // Check if the user is already following
+  if (existingFollower) {
+    // if they are, remove the follower relationship
+    await existingFollower.destroy();
+    res.status(200).json({ message: "Unfollowed successfully" });
+  } else {
+    await Follower.create({
+      follow_id: uuidv4(), // Generate a unique ID for the follow
+      user_id,
+      follower_id,
+    });
+    res.status(200).json({ message: "Followed successfully" });
   }
 });
 
