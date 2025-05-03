@@ -9,7 +9,7 @@ module.exports = {
         autoIncrement: false,
         primaryKey: true
       },
-      userId: {
+      user_id: {
         type: Sequelize.UUID,
         references: {
           model: 'users',
@@ -19,7 +19,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         allowNull: false
       },
-      followerId: {
+      follower_id: {
         type: Sequelize.UUID,
         references: {
           model: 'users',
@@ -30,11 +30,6 @@ module.exports = {
         allowNull: false
       },
       followedAt: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
-      },
-      updatedAt: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')

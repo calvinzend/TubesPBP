@@ -9,7 +9,7 @@ module.exports = {
         autoIncrement: false,
         primaryKey: true
       },
-      userId: {
+      user_id: {
         type: Sequelize.UUID,
         references: {
           model: 'users',
@@ -27,7 +27,7 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true
       },
-      replyId: {
+      reply_id: {
         type: Sequelize.UUID,
         references: {
           model: 'tweets',
