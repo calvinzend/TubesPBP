@@ -230,6 +230,29 @@ app.get("/posts/user/:user_id", async (req, res) => {
   }
 });
 
+app.get("/likes/:tweet_id", async (req, res) => {
+  try {
+    const { tweet_id } = req.params;
+
+
+    // Check if the user has liked the tweet
+    const like = await Likes.findOne({
+      where: {
+        tweet_id: tweet_id,
+      },
+    });
+
+    const countLike = await Likes.count({
+      where: { tweet_id: tweet_id },
+    });
+
+    res.status(200).json({ likes: countLike, liked: !!like });
+  } catch (error) {
+    console.error("Error fetching likes:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.get("/followers/:userId", async (req, res) => {
   try {
     // Find all followers of the user

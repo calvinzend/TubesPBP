@@ -212,11 +212,11 @@ export const UserPage = () => {
         {userPosts.length > 0 ? (
           userPosts.map((post) => (
             <Post
+              tweet_id={post.tweet_id}
               key={post.id} // penting buat React
               name={userData.name}
               handle={`@${userData.username}`}
               content={post.content}
-              likes={post.likes || "0"}
               image_path={userData.profilePicture || "default-profile.png"}
             />
           ))

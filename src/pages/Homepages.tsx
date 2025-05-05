@@ -19,7 +19,7 @@ export const HomePage = () => {
 
   // Define the PostType interface
   interface PostType {
-    id: string;
+    tweet_id: string;
     content: string;
     image_path?: string;
     User: {
@@ -97,17 +97,20 @@ export const HomePage = () => {
         });
         const data = await response.json();
         setPosts(data);
+        console.log("Fetched posts:", data); // Debugging line
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
     };
 
+   
+
     useEffect(() => {
       fetchPosts();
+
     }, []);
 
-
-  
+    
 
   return (
     <div style={{ maxWidth: "100%", margin: "0" }}>
@@ -132,7 +135,7 @@ export const HomePage = () => {
             background: "black",
             border: "none",
             borderBottom: "2px solid white",
-            color: "white",
+            // color: "white",
             fontSize: "16px",
           }}
           onChange={(e) =>
@@ -163,15 +166,14 @@ export const HomePage = () => {
         </div>
       </div>
 
-
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
       {posts.map((post) => (
           <Post
+            tweet_id={post.tweet_id}
             name={post.User?.name || "Unknown"}
             handle={`@${post.User?.username || "unknown"}`}
             content={post.content}
             image_path={post.User?.profilePicture || "default-profile.png"}
-            likes="0"
           />
         ))}
 
