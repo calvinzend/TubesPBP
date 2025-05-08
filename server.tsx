@@ -303,6 +303,29 @@ app.get("/following/:userId", async (req, res) => {
   }
 });
 
+// get all replies for a tweet
+app.get("/posts/replies/:tweet_id", async (req, res) => {
+  try {
+    const { tweet_id } = req.params;
+    const replies = await Tweet.findAll({
+      where: { reply_id: tweet_id },
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+      order: [['createdAt', 'ASC']],
+    });
+
+    res.status(200).json({
+      replies,
+      message: replies.length === 0 ? "No replies found" : "Replies fetched successfully"
+    });
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 //==================POSTS==================//
 app.post("/posts", async (req, res) => {
   try {
