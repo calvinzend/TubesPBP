@@ -326,6 +326,28 @@ app.get("/posts/replies/:tweet_id", async (req, res) => {
   }
 });
 
+// get a specific reply by id
+app.get("/posts/replies/reply/:reply_id", async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+    const reply = await Tweet.findByPk(reply_id, {
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+    });
+
+    res.status(200).json({
+      reply,
+      message: reply ? "Reply fetched successfully" : "Reply not found"
+    });
+    
+  } catch (error) {
+    console.error("Error fetching reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 //==================POSTS==================//
 app.post("/posts", async (req, res) => {
   try {
