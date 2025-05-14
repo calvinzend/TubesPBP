@@ -516,7 +516,7 @@ app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, re
 
 //==================PUT==================//
 // put a reply
-app.put("replies/:reply_id", upload.single('image_path'), async (req, res) => {
+app.put("/replies/:reply_id", upload.single('image_path'), async (req, res) => {
   try {
     const { reply_id } = req.params;
     const { user_id, content } = req.body;
@@ -547,6 +547,25 @@ app.put("replies/:reply_id", upload.single('image_path'), async (req, res) => {
 });
 
 //==================DELETE==================//
+// delete a reply
+app.delete("/replies/:reply_id", async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+
+    const replyExists = await Reply.findByPk(reply_id);
+    if (!replyExists) return res.status(404).json({ error: "Reply not found" });
+
+    await replyExists.destroy(); // soft delete the reply (paranoid: true)
+
+    // permanently delete the reply
+    // await replyExists.destroy({ force: true });
+
+    res.status(200).json({ message: "Reply deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 //==================Autenticate==================//
 sequelize.authenticate()
