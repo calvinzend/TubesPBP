@@ -14,6 +14,7 @@ import { Likes } from './models/Likes';
 import { Op } from 'sequelize';
 import { create } from 'domain';
 import { Tweet } from './models/Tweet';
+import { Reply } from './models/Reply';
 
 dotenv.config();
 
@@ -308,7 +309,7 @@ app.get("/replies/:reply_id", async (req, res) => {
   try {
     const { reply_id } = req.params;
 
-    const reply = await Tweet.findByPk(reply_id, {
+    const reply = await Reply.findByPk(reply_id, {
       include: {
         model: User,
         attributes: ['name', 'username', 'profilePicture'],
@@ -334,7 +335,7 @@ app.get("/users/:user_id/replies", async (req, res) => {
   try {
     const { user_id } = req.params;
 
-    const replies = await Tweet.findAll({
+    const replies = await Reply.findAll({
       where: { user_id: user_id },
       include: {
         model: User,
@@ -362,8 +363,8 @@ app.get("/posts/:tweet_id/replies", async (req, res) => {
   try {
     const { tweet_id } = req.params;
 
-    const replies = await Tweet.findAll({
-      where: { reply_id: tweet_id },
+    const replies = await Reply.findAll({
+      where: { tweet_id: tweet_id },
       include: {
         model: User,
         attributes: ['name', 'username', 'profilePicture'],
