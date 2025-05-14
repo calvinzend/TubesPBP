@@ -307,6 +307,7 @@ app.get("/following/:userId", async (req, res) => {
 app.get("/posts/replies/:tweet_id", async (req, res) => {
   try {
     const { tweet_id } = req.params;
+
     const replies = await Tweet.findAll({
       where: { reply_id: tweet_id },
       include: {
@@ -330,6 +331,7 @@ app.get("/posts/replies/:tweet_id", async (req, res) => {
 app.get("/posts/replies/reply/:reply_id", async (req, res) => {
   try {
     const { reply_id } = req.params;
+    
     const reply = await Tweet.findByPk(reply_id, {
       include: {
         model: User,
@@ -341,7 +343,6 @@ app.get("/posts/replies/reply/:reply_id", async (req, res) => {
       reply,
       message: reply ? "Reply fetched successfully" : "Reply not found"
     });
-    
   } catch (error) {
     console.error("Error fetching reply:", error);
     res.status(500).json({ error: "Internal server error" });
