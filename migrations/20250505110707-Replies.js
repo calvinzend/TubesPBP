@@ -2,59 +2,60 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable('replies', {
       reply_id: {
         type: Sequelize.UUID,
-        autoIncrement: false,
-        primaryKey: true
+        allowNull: false,
+        primaryKey: true,
+        defaultValue: Sequelize.UUIDV4,
       },
       user_id: {
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'users',
-          key: 'user_id'
+          key: 'user_id',
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        allowNull: false
       },
       tweet_id: {
         type: Sequelize.UUID,
+        allowNull: false,
         references: {
           model: 'tweets',
-          key: 'tweet_id'
+          key: 'tweet_id',
         },
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
-        allowNull: false
       },
       content: {
         type: Sequelize.TEXT,
-        allowNull: false
+        allowNull: false,
       },
       image_path: {
         type: Sequelize.STRING,
-        allowNull: true
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.NOW,
       },
       updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
-        defaultValue: Sequelize.NOW
+        defaultValue: Sequelize.NOW,
       },
       deleted_at: {
         type: Sequelize.DATE,
-        allowNull: true
-      }
+        allowNull: true,
+      },
     });
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('replies');
-  }
+  },
 };
