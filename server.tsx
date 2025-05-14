@@ -479,6 +479,41 @@ app.post("/follow/:follower_id", async (req, res) => {
   }
 });
 
+// post a reply
+app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, res) => {
+  try {
+    const { tweet_id } = req.params;
+    const { user_id, content } = req.body;
+    const file = req.file;
+
+    if (!user_id || !content) {
+      return res.status(400).json({ error: "user_id and content are required" });
+    }
+
+    const tweetExists = await Tweet.findByPk(tweet_id);
+    if (!tweetExists) return res.status(404).json({ error: "Tweet not found" });
+
+    const userExists = await User.findByPk(user_id);
+    if (!userExists) return res.status(404).json({ error: "User not found" });
+
+    const reply = await Reply.create({
+      reply_id: uuidv4(),
+      user_id: user_id,
+      tweet_id: tweet_id,
+      content: content,
+      image_path: file ? file.path : null,
+    });
+
+    res.status(201).json({
+      reply,
+      message: "Reply created successfully"
+    });
+  } catch (error) {
+    console.error("Error creating reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 //==================Autenticate==================//
 sequelize.authenticate()
   .then(() => {
