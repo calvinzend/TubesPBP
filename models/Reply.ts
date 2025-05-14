@@ -1,5 +1,5 @@
 import { UUID } from "sequelize";
-import { Table, Column, Model, DataType } from "sequelize-typescript";
+import { Table, Column, Model, DataType, ForeignKey } from "sequelize-typescript";
 
 @Table({
     tableName: "replies",
