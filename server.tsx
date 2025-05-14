@@ -490,11 +490,11 @@ app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, re
       return res.status(400).json({ error: "user_id and content are required" });
     }
 
-    const tweetExists = await Tweet.findByPk(tweet_id);
-    if (!tweetExists) return res.status(404).json({ error: "Tweet not found" });
-
     const userExists = await User.findByPk(user_id);
     if (!userExists) return res.status(404).json({ error: "User not found" });
+
+    const tweetExists = await Tweet.findByPk(tweet_id);
+    if (!tweetExists) return res.status(404).json({ error: "Tweet not found" });
 
     const reply = await Reply.create({
       reply_id: uuidv4(),
@@ -513,6 +513,40 @@ app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, re
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+//==================PUT==================//
+// put a reply
+app.put("replies/:reply_id", upload.single('image_path'), async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+    const { user_id, content } = req.body;
+    const file = req.file;
+
+    if (!user_id || !content) {
+      return res.status(400).json({ error: "user_id and content are required" });
+    }
+  
+    const userExists = await User.findByPk(user_id);
+    if (!userExists) return res.status(404).json({ error: "User not found" });
+
+    const replyExists = await Reply.findByPk(reply_id);
+    if (!replyExists) return res.status(404).json({ error: "Reply not found" });
+
+    replyExists.content = content;
+    replyExists.image_path = file ? file.path : '';
+    await replyExists.save();
+
+    res.status(200).json({
+      replyExists,
+      message: "Reply updated successfully"
+    });
+  } catch (error) {
+    console.error("Error updating reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//==================DELETE==================//
 
 //==================Autenticate==================//
 sequelize.authenticate()
