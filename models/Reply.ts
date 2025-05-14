@@ -12,7 +12,8 @@ export class Reply extends Model {
     @Column({
         primaryKey: true,
         allowNull: false,
-        type: DataType.UUID
+        type: DataType.UUID,
+        defaultValue: DataType.UUIDV4
     })
     declare reply_id: string;
     @ForeignKey(() => User)
