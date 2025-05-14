@@ -1,5 +1,7 @@
 import { UUID } from "sequelize";
 import { Table, Column, Model, DataType, ForeignKey } from "sequelize-typescript";
+import { User } from "./User";
+import { Tweet } from "./Tweet";
 
 @Table({
     tableName: "replies",
@@ -13,6 +15,7 @@ export class Reply extends Model {
         type: DataType.UUID
     })
     declare reply_id: string;
+    @ForeignKey(() => User)
     @Column({
         type: DataType.UUID,
         allowNull: false,
@@ -24,6 +27,7 @@ export class Reply extends Model {
         onUpdate: 'CASCADE'
     })
     declare user_id: string;
+    @ForeignKey(() => Tweet)
     @Column({
         type: DataType.UUID,
         allowNull: false,
@@ -36,7 +40,7 @@ export class Reply extends Model {
     })
     declare tweet_id: string;
     @Column({
-        type: DataType.STRING,
+        type: DataType.TEXT,
         allowNull: false
     })
     declare content: string;
@@ -50,11 +54,16 @@ export class Reply extends Model {
         allowNull: false,
         defaultValue: DataType.NOW
     })
-    declare createdAt: Date;
+    declare created_at: Date;
     @Column({
         type: DataType.DATE,
         allowNull: false,
         defaultValue: DataType.NOW
     })
-    declare updatedAt: Date;
+    declare updated_at: Date;
+    @Column({
+        type: DataType.DATE,
+        allowNull: true
+    })
+    declare deleted_at: Date;
 }
