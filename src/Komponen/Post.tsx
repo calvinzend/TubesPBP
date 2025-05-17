@@ -212,7 +212,76 @@ export const Post = ({ tweet_id, name, handle, content,  image_path}: PostProps)
         >
           <CiHeart size={20} color={liked ? "red" : "gray"} /> {formattedLikes}
         </span>
+        </div>
 
+        {/* Reply Form */}
+        <form
+          onSubmit={handleReply}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            marginTop: "16px",
+            marginLeft: "52px",
+          }}>
+            <input
+              type="text"
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Write a reply..."
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "20px",
+                border: "1px solid lightgray",
+                outline: "none",
+              }}/>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setReplyImage(e.target.files[0]);
+                }
+              }}
+              style={{ marginLeft: "10px" }}/>
+            <button type="submit" style={{ marginLeft: "10px" }}>Reply</button>
+          </form>
+
+          {/* Preview Image */}
+          {replyImage && (
+            <div style={{ marginTop: "10px", marginLeft: "52px" }}>
+              <img
+                src={URL.createObjectURL(replyImage)}
+                alt="Preview"
+                style={{
+                  width: "100px",
+                  height: "100px",
+                  borderRadius: "10px",
+                  objectFit: "cover",
+                }}
+              />
+            </div>
+          )}
+
+          {/* Replies List */}
+          <div style={{ marginTop: "16px", marginLeft: "52px" }}>
+            {replies.map((reply) => (
+              <div key={reply.reply_id} style={{ marginBottom: "10px" }}>
+                <img
+                  src={reply.user.profilePicture}
+                  alt="profile"
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    borderRadius: "50%",
+                    backgroundColor: "white",
+                    objectFit: "cover",
+                  }}
+                />
+                <strong>{reply.user.name}</strong> <span>{reply.content}</span>
+              </div>
+            ))}
           </div>
         </div>
       );
