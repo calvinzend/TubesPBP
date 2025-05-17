@@ -14,6 +14,7 @@ import { Likes } from './models/Likes';
 import { Op } from 'sequelize';
 import { create } from 'domain';
 import { Tweet } from './models/Tweet';
+import { Reply } from './models/Reply';
 
 dotenv.config();
 
@@ -303,6 +304,88 @@ app.get("/following/:userId", async (req, res) => {
   }
 });
 
+// get a specific reply
+app.get("/replies/:reply_id", async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+
+    const reply = await Reply.findByPk(reply_id, {
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+    });
+
+    if (!reply) {
+      return res.status(404).json({ error: "Reply not found" });
+    }
+
+    res.status(200).json({
+      reply,
+      message: "Reply fetched successfully"
+    });
+  } catch (error) {
+    console.error("Error fetching reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// get all replies for a specific user
+app.get("/users/:user_id/replies", async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const replies = await Reply.findAll({
+      where: { user_id: user_id },
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+      order: [['createdAt', 'ASC']],
+    });
+
+    if (replies.length === 0) {
+      return res.status(404).json({ error: "No replies found" });
+    }
+
+    res.status(200).json({
+      replies,
+      message: "Replies fetched successfully"
+    });
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// get all replies for a specific tweet
+app.get("/posts/:tweet_id/replies", async (req, res) => {
+  try {
+    const { tweet_id } = req.params;
+
+    const replies = await Reply.findAll({
+      where: { tweet_id: tweet_id },
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+      order: [['createdAt', 'ASC']],
+    });
+
+    if (replies.length === 0) {
+      return res.status(404).json({ error: "No replies found" });
+    }
+    
+    res.status(200).json({
+      replies,
+      message: "Replies fetched successfully"
+    });
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 //==================POSTS==================//
 app.post("/posts", async (req, res) => {
   try {
@@ -393,6 +476,94 @@ app.post("/follow/:follower_id", async (req, res) => {
       follower_id,
     });
     res.status(200).json({ message: "Followed successfully" });
+  }
+});
+
+// post a reply
+app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, res) => {
+  try {
+    const { tweet_id } = req.params;
+    const { user_id, content } = req.body;
+    const file = req.file;
+
+    if (!user_id || !content) {
+      return res.status(400).json({ error: "user_id and content are required" });
+    }
+
+    const userExists = await User.findByPk(user_id);
+    if (!userExists) return res.status(404).json({ error: "User not found" });
+
+    const tweetExists = await Tweet.findByPk(tweet_id);
+    if (!tweetExists) return res.status(404).json({ error: "Tweet not found" });
+
+    const reply = await Reply.create({
+      reply_id: uuidv4(),
+      user_id: user_id,
+      tweet_id: tweet_id,
+      content: content,
+      image_path: file ? file.path : null,
+    });
+
+    res.status(201).json({
+      reply,
+      message: "Reply created successfully"
+    });
+  } catch (error) {
+    console.error("Error creating reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//==================PUT==================//
+// put a reply
+app.put("/replies/:reply_id", upload.single('image_path'), async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+    const { user_id, content } = req.body;
+    const file = req.file;
+
+    if (!user_id || !content) {
+      return res.status(400).json({ error: "user_id and content are required" });
+    }
+  
+    const userExists = await User.findByPk(user_id);
+    if (!userExists) return res.status(404).json({ error: "User not found" });
+
+    const replyExists = await Reply.findByPk(reply_id);
+    if (!replyExists) return res.status(404).json({ error: "Reply not found" });
+
+    replyExists.content = content;
+    replyExists.image_path = file ? file.path : '';
+    await replyExists.save();
+
+    res.status(200).json({
+      replyExists,
+      message: "Reply updated successfully"
+    });
+  } catch (error) {
+    console.error("Error updating reply:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+//==================DELETE==================//
+// delete a reply
+app.delete("/replies/:reply_id", async (req, res) => {
+  try {
+    const { reply_id } = req.params;
+
+    const replyExists = await Reply.findByPk(reply_id);
+    if (!replyExists) return res.status(404).json({ error: "Reply not found" });
+
+    await replyExists.destroy(); // soft delete the reply (paranoid: true)
+
+    // permanently delete the reply
+    // await replyExists.destroy({ force: true });
+
+    res.status(200).json({ message: "Reply deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting reply:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
