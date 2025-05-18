@@ -12,9 +12,8 @@ interface DecodedToken {
 export const HomePage = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
-  const [postContent, setPostContent] = useState<{ content: string; image_path?: string }>({
-    content: "",
-  });
+  const [postContent, setPostContent] = useState<string>("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
   
 
   // Define the PostType interface
@@ -22,7 +21,7 @@ export const HomePage = () => {
     tweet_id: string;
     content: string;
     image_path?: string;
-    User: {
+    user: {
       name: string;
       username: string;
       profilePicture: string;
@@ -60,32 +59,35 @@ export const HomePage = () => {
     }, [userId]);
 
 
-    const addTweet = async () => {
-      try {
-        const response = await fetch(`http://localhost:3000/posts`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            user_id: userId,
-            content: postContent.content,
-            image_path: postContent.image_path || "",
-          }),
-        });
-    
-        const data = await response.json();
-    
-        if (response.ok) {
-          setPosts((prevPosts) => [data, ...prevPosts]);
-          alert("Post created successfully!");
-          fetchPosts();
-        }
-      } catch (error) {
-        console.error("Error creating post:", error);
+   const addTweet = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("user_id", userId || "");
+      formData.append("content", postContent || ""); 
+
+      if (imageFile) {
+        formData.append("image", imageFile); 
       }
-    };
+
+    const response = await fetch(`http://localhost:3000/posts`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      setPosts((prevPosts) => [data, ...prevPosts]);
+      setPostContent("");      // Kosongkan input teks
+      setImageFile(null);      // Reset file upload
+    }
+  } catch (error) {
+    console.error("Error creating post:", error);
+  }
+};
 
     const fetchPosts = async () => {
       try {
@@ -96,6 +98,7 @@ export const HomePage = () => {
           },
         });
         const data = await response.json();
+         console.log("Posts data:", data);
         setPosts(data);
         console.log("Fetched posts:", data); // Debugging line
       } catch (error) {
@@ -126,32 +129,33 @@ export const HomePage = () => {
               objectFit: "cover",
             }}
           />
-        <input
+       <input
           type="text"
           placeholder="What's happening?"
+          value={postContent}
+          onChange={(e) => setPostContent(e.target.value)}
           style={{
             width: "100%",
             padding: "10px",
             background: "black",
             border: "none",
             borderBottom: "2px solid white",
-            // color: "white",
             fontSize: "16px",
           }}
-          onChange={(e) =>
-            setPostContent((prev: any) => ({ ...prev, content: e.target.value }))
-          }
         />
         <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "10px" }}>
-        <input
-            type="file"
-            id="image-upload"
-            style={{ display: "none" }}
-            accept="image/*"
-            onChange={(e) =>
-              setPostContent((prev: any) => ({ ...prev, image_path: e.target.value }))
+      <input
+          type="file"
+          id="image-upload"
+          style={{ display: "none" }}
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              setImageFile(file);
             }
-          />
+          }}
+        />
           {/* Label acts as the button to trigger file input */}
           <label htmlFor="image-upload" style={{ cursor: "pointer", color: "white" }}>
             <FaFileImage size={24} />
@@ -167,15 +171,16 @@ export const HomePage = () => {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {posts.map((post) => (
-          <Post
-            tweet_id={post.tweet_id}
-            name={post.User?.name || "Unknown"}
-            handle={`@${post.User?.username || "unknown"}`}
-            content={post.content}
-            image_path={post.User?.profilePicture || "default-profile.png"}
-          />
-        ))}
+     {posts.map((post) => (
+        <Post
+          tweet_id={post.tweet_id}
+          name={post.user?.name || "Unknown"}
+          handle={`@${post.user?.username || "unknown"}`}
+          content={post.content}
+          image_path={post.image_path || ""}
+          profilePicture={post.user?.profilePicture || ""}
+        />
+      ))}
 
       </div>
       

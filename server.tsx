@@ -31,7 +31,7 @@ const secretKey = process.env.JWT_SECRET || 'your_secret_key';
 
 const sequelize = new Sequelize({
   ...config.development,
-  models: [User, Tweet, Follower, Likes],
+  models: [User, Tweet, Follower, Likes, Reply], // Add your models here
 });
 User.hasMany(Tweet, { foreignKey: 'user_id' });
 Tweet.belongsTo(User, { foreignKey: 'user_id' });
@@ -194,11 +194,14 @@ app.get("/users/:id", async (req, res) => {
 app.get("/posts", async (req, res) => {
   try {
     const posts = await Tweet.findAll({
+      where: {
+        reply_id: null,  // hanya ambil post yang bukan reply
+      },
       include: {
         model: User,
         attributes: ['name', 'username', 'profilePicture'],
       },
-      order: [['createdAt', 'DESC']], // Order by createdAt in descending order
+      order: [['createdAt', 'DESC']], // Urut berdasarkan createdAt DESC
     });
     res.json(posts);
   } catch (error) {
@@ -210,7 +213,14 @@ app.get("/posts", async (req, res) => {
 
 app.get("/posts/:id", async (req, res) => {
   try {
-    const post = await Tweet.findByPk(req.params.id);
+    const post = await Tweet.findByPk(req.params.id, {
+    include: [
+        {
+            model: Tweet,
+            as: 'replies'
+        }
+    ]
+});
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
@@ -363,8 +373,8 @@ app.get("/posts/:tweet_id/replies", async (req, res) => {
   try {
     const { tweet_id } = req.params;
 
-    const replies = await Reply.findAll({
-      where: { tweet_id: tweet_id },
+    const replies = await Tweet.findAll({
+      where: { reply_id: tweet_id },
       include: {
         model: User,
         attributes: ['name', 'username', 'profilePicture'],
@@ -387,9 +397,13 @@ app.get("/posts/:tweet_id/replies", async (req, res) => {
 });
 
 //==================POSTS==================//
-app.post("/posts", async (req, res) => {
+app.post("/posts", upload.single("image"), async (req, res) => {
+  console.log("Request body:", req.body);
+  console.log("Request file:", req.file);
+
   try {
-    const { user_id, content, image_path } = req.body;
+    const { user_id, content } = req.body;
+    const file = req.file;
 
     if (!content) {
       return res.status(400).json({ error: "Content is required" });
@@ -397,9 +411,9 @@ app.post("/posts", async (req, res) => {
 
     const tweet = await Tweet.create({
       tweet_id: uuidv4(),
-      user_id: user_id,
-      content: content,
-      image_path: image_path || null,
+      user_id,
+      content,
+      image_path: file ? file.path : null,
       reply_id: null,
     });
 
@@ -496,13 +510,14 @@ app.post("/posts/:tweet_id/replies", upload.single('image_path'), async (req, re
     const tweetExists = await Tweet.findByPk(tweet_id);
     if (!tweetExists) return res.status(404).json({ error: "Tweet not found" });
 
-    const reply = await Reply.create({
-      reply_id: uuidv4(),
+    const reply = await Tweet.create({
+      tweet_id: uuidv4(),
       user_id: user_id,
-      tweet_id: tweet_id,
       content: content,
       image_path: file ? file.path : null,
+      reply_id: tweet_id,
     });
+
 
     res.status(201).json({
       reply,

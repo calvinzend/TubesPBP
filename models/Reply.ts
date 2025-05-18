@@ -43,6 +43,22 @@ export class Reply extends Model {
     })
     declare image_path: string;
 
+    @Column({
+        type: DataType.DATE,
+        allowNull: true
+    })
+    declare createdAt: Date;
+    @Column({
+        type: DataType.DATE,
+        allowNull: true
+    })
+    declare updatedAt: Date;
+    @Column({
+        type: DataType.DATE,
+        allowNull: true
+    })
+    declare deletedAt: Date;
+
     @BelongsTo(() => User)
     user!: User;
 

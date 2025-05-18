@@ -213,11 +213,12 @@ export const UserPage = () => {
           userPosts.map((post) => (
             <Post
               tweet_id={post.tweet_id}
-              key={post.id} // penting buat React
               name={userData.name}
               handle={`@${userData.username}`}
               content={post.content}
-              image_path={userData.profilePicture || "default-profile.png"}
+              image_path={post.image_path || ""}
+              profilePicture={userData.profilePicture || "default-profile.png"}
+              user={userData}
             />
           ))
         ) : (
