@@ -6,6 +6,7 @@ import { UserPage } from "../pages/Userpage";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
 import { ProtectedRoute } from "./ProtectedRoute";
+import { UserOther } from "../pages/UserOther";
 
 const authenticate = () => {
   const token = localStorage.getItem("token");
@@ -38,6 +39,11 @@ export const router = createBrowserRouter([
         element: <UserPage />,
         loader: authenticate,
       },
+      {
+        path: "user/:id",
+        element: <UserOther />,
+        loader: authenticate,
+      }
     ],
   },
   {

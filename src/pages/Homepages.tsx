@@ -22,6 +22,7 @@ export const HomePage = () => {
     content: string;
     image_path?: string;
     user: {
+      user_id: string;
       name: string;
       username: string;
       profilePicture: string;
@@ -179,6 +180,7 @@ export const HomePage = () => {
           content={post.content}
           image_path={post.image_path || ""}
           profilePicture={post.user?.profilePicture || ""}
+          user_id={post.user?.user_id || ""}
         />
       ))}
 

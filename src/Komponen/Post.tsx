@@ -2,6 +2,7 @@ import { CiHeart } from "react-icons/ci";
 import { FaRegComment } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import {jwtDecode} from "jwt-decode";
+import { useNavigate } from "react-router-dom";
 
 interface PostProps {
   tweet_id: string;
@@ -10,6 +11,7 @@ interface PostProps {
   content: string;
   image_path: string;
   profilePicture: string;
+  user_id: string; 
   user?: {
     name: string;
     username: string;
@@ -30,7 +32,7 @@ interface ReplyType {
   replies?: ReplyType[];
 }
 
-export const Post = ({ tweet_id, name, handle, content, image_path,profilePicture }: PostProps) => {
+export const Post = ({ tweet_id, name, handle, content, image_path,profilePicture,user_id }: PostProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userData, setUserData] = useState<any>(null);
   const [likes, setLikes] = useState<number>(0);
@@ -40,6 +42,8 @@ export const Post = ({ tweet_id, name, handle, content, image_path,profilePictur
   const [replyImage, setReplyImage] = useState<File | null>(null);
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [activeReplyId, setActiveReplyId] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -379,7 +383,7 @@ export const Post = ({ tweet_id, name, handle, content, image_path,profilePictur
         />
         <div>
           <div style={{ fontWeight: 600 }}>{name}</div>
-          <div style={{ color: "#555", fontSize: "14px" }}>{handle}</div>
+          <div style={{ color: "#555", fontSize: "14px" }}  onClick={() => navigate(`/user/${user_id}`)} >{handle}</div>
         </div>
       </div>
 
