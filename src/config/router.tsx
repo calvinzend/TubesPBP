@@ -38,6 +38,11 @@ export const router = createBrowserRouter([
         element: <UserPage />,
         loader: authenticate,
       },
+       {
+        path: "userpage/:id",
+        element: <UserPage />,
+        loader: authenticate,
+      },
     ],
   },
   {

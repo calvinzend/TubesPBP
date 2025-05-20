@@ -199,7 +199,7 @@ app.get("/posts", async (req, res) => {
       },
       include: {
         model: User,
-        attributes: ['name', 'username', 'profilePicture'],
+        attributes: ['user_id','name', 'username', 'profilePicture'],
       },
       order: [['createdAt', 'DESC']], // Urut berdasarkan createdAt DESC
     });
