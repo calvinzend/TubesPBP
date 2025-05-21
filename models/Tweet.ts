@@ -1,5 +1,6 @@
 import { Table, Column, Model, DataType, ForeignKey, BelongsTo, HasMany } from 'sequelize-typescript';
 import { User } from './User'; // jika ada
+import { Likes } from './Likes';
 
 @Table({
     tableName: "tweets",
@@ -48,9 +49,13 @@ export class Tweet extends Model {
     @BelongsTo(() => User)
     user!: User;
 
-    @HasMany(() => Tweet, 'reply_id')
+    @BelongsTo(() => Tweet, { foreignKey: "reply_id", as: "ParentTweet" })
+    declare parentTweet: Tweet;
+
+    @HasMany(() => Tweet, { foreignKey: "reply_id", as: "Replies" })
     declare replies: Tweet[];
 
-    @BelongsTo(() => Tweet, 'reply_id')
-    declare parentTweet: Tweet;
+
+    @HasMany(() => Likes, 'tweet_id')
+    likes!: Likes[];
 }

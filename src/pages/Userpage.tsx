@@ -19,6 +19,8 @@ export const UserPage = () => {
   const [userData, setUserData] = useState<any>(null);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [updatedUser, setUpdatedUser] = useState<any>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
+
 
   const handleResize = () => setIsMobile(window.innerWidth <= 768);
   useEffect(() => {
@@ -26,6 +28,27 @@ export const UserPage = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+      if (!updatedUser) {
+        setIsFormValid(false);
+        return;
+      }
+
+      const { username, name, email, bio, password } = updatedUser;
+      // Cek semua field sudah diisi (bisa disesuaikan)
+      if (
+        username?.trim() &&
+        name?.trim() &&
+        email?.trim() &&
+        bio?.trim() &&
+        password?.trim()
+      ) {
+        setIsFormValid(false);
+      } else {
+        setIsFormValid(true);
+      }
+    }, [updatedUser]);
 
   // Ambil token dan user ID
   useEffect(() => {
@@ -109,7 +132,7 @@ export const UserPage = () => {
       });
       if (!response.ok) throw new Error("Failed to update user");
       const data = await response.json();
-      setUserData(data);
+      setUserData(data);  
       setShowModal(false);
     } catch (error) {
       console.error("Error updating user:", error);
@@ -242,7 +265,10 @@ export const UserPage = () => {
               content={post.content}
               image_path={post.image_path || ""}
               profilePicture={userData.profilePicture || "default-profile.png"}
-              user={userData}
+              user_id={userData.user_id}
+              likeCount={post.likescount || 0}
+              replyCount={post.replyCount || 0}
+              createdAt={post.createdAt || ""}
             />
           ))
         ) : (
@@ -297,14 +323,6 @@ export const UserPage = () => {
               style={inputStyle}
             />
             <input
-              type="password"
-              placeholder="Password"
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
               type="email"
               placeholder="Email"
               defaultValue={userData.email}
@@ -319,6 +337,22 @@ export const UserPage = () => {
               defaultValue={userData.bio}
               onChange={(e) =>
                 setUpdatedUser((prev: any) => ({ ...prev, bio: e.target.value }))
+              }
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="Old Password"
+              onChange={(e) =>
+                setUpdatedUser((prev: any) => ({ ...prev, oldPassword: e.target.value }))
+              }
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              onChange={(e) =>
+                setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
               }
               style={inputStyle}
             />
@@ -339,7 +373,12 @@ export const UserPage = () => {
               </button>
               <button
                 onClick={updateUser}
-                style={buttonStyle("white", "black")}
+                disabled={!isFormValid}
+                style={{
+                  ...buttonStyle("white", "black"),
+                  opacity: isFormValid ? 1 : 0.5,
+                  cursor: isFormValid ? "pointer" : "not-allowed",
+                }}
               >
                 Save
               </button>

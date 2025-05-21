@@ -21,6 +21,9 @@ export const HomePage = () => {
     tweet_id: string;
     content: string;
     image_path?: string;
+    likeCount: number;
+    replyCount: number;
+    createdAt: string;
     user: {
       user_id: string;
       name: string;
@@ -181,6 +184,9 @@ export const HomePage = () => {
           image_path={post.image_path || ""}
           profilePicture={post.user?.profilePicture || ""}
           user_id={post.user?.user_id || ""}
+          likeCount={post.likeCount || 0}
+          replyCount={post.replyCount || 0}
+          createdAt={post.createdAt}
         />
       ))}
 
