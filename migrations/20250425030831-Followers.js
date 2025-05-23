@@ -19,7 +19,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         allowNull: false
       },
-      follower_id: {
+      following_id: {
         type: Sequelize.UUID,
         references: {
           model: 'users',

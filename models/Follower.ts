@@ -1,4 +1,3 @@
-import { UUID } from 'sequelize';
 import { Table, Column, Model, DataType, AllowNull } from 'sequelize-typescript';
 
 @Table({
@@ -23,7 +22,7 @@ export class Follower extends Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })
-    declare user_id: string;
+    declare user_id: string; // User that follow
     @Column({
         type: DataType.UUID,
         allowNull: false,
@@ -34,7 +33,7 @@ export class Follower extends Model {
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE'
     })
-    declare follower_id: string;
+    declare following_id: string; // User that get Followed
     @Column({
         type: DataType.DATE,
         allowNull: false,

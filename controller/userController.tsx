@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { User } from "../models/User";
 import bcrypt from "bcrypt";
+import { Follower } from "../models/Follower";
 
 
 
@@ -15,13 +16,32 @@ export const allUser = async (req: Request, res: Response) : Promise<void> => {
   }
 }
 
-export const userDetail = async (req: Request, res: Response) : Promise<void> => { 
-    try {
+export const userDetail = async (req: Request, res: Response): Promise<void> => { 
+  try {
+    console.log("masuk sini");
     const user = await User.findByPk(req.params.id);
     if (!user) {
       res.status(404).json({ error: "User not found" });
+      return;
     }
-    res.json(user);
+
+    // Count followers (how many users follow this user)
+    console.log("Coba ambil count follower");
+    const followersCount = await Follower.count({
+      where: { following_id: req.params.id }
+    });
+    
+    // Count following (how many users this user follows)
+    console.log("Coba ambil count following");
+    const followingCount = await Follower.count({
+      where: { user_id: req.params.id }
+    });
+
+    res.json({
+      user,
+      followersCount,
+      followingCount
+    });
   } catch (error) {
     console.error("Error fetching user:", error);
     res.status(500).json({ error: "Internal server error" });

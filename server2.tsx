@@ -40,13 +40,15 @@ const sequelize = new Sequelize({
   dialect: config.dialect
 });
 
-sequelize.authenticate()
-  .then(() => {
-    console.log('Database connected.');
-    app.listen(3000, () => {
-      console.log(`Server running on port 3000`);
+import("./models/associations").then(() => {
+  sequelize.authenticate()
+    .then(() => {
+      console.log('Database connected.');
+      app.listen(3000, () => {
+        console.log(`Server running on port 3000`);
+      });
+    })
+    .catch((err) => {
+      console.error('Unable to connect to the database:', err);
     });
-  })
-  .catch((err) => {
-    console.error('Unable to connect to the database:', err);
-  });
+});

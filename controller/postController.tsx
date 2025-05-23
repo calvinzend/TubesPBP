@@ -47,17 +47,18 @@ export const allPost = async (req: Request, res: Response): Promise<void> => {
 };
 
 export const post = async (req: Request, res: Response): Promise<void> => {
-     try {
-        const post = await Tweet.findByPk(req.params.id, {
-        include: [
-            {
-                model: Tweet,
-                as: 'replies'
-            }
-        ]
+  try {
+    const post = await Tweet.findByPk(req.params.id, {
+      include: [
+        {
+          model: Tweet,
+          as: 'Replies' // Use the exact alias as in your model
+        }
+      ]
     });
     if (!post) {
-        res.status(404).json({ error: "Post not found" });
+      res.status(404).json({ error: "Post not found" });
+      return;
     }
     res.json(post);
   } catch (error) {
