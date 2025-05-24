@@ -6,7 +6,7 @@ import { UserPage } from "../pages/Userpage";
 import { Login } from "../pages/Login";
 import { Register } from "../pages/Register";
 import { ProtectedRoute } from "./ProtectedRoute";
-import { Reply } from "../Komponen/Reply";
+import { TweetDetail } from "../pages/TweetDetail";
 
 const authenticate = () => {
   const token = localStorage.getItem("token");
@@ -39,17 +39,16 @@ export const router = createBrowserRouter([
         element: <UserPage />,
         loader: authenticate,
       },
-       {
+      {
         path: "userpage/:id",
         element: <UserPage />,
         loader: authenticate,
       },
       {
-        path: "reply/:id",
-        // element: <Reply />,
+        path: "tweet/:tweet_id",
+        element: <TweetDetail />,
         loader: authenticate,
-      },
-
+      }
     ],
   },
   {
@@ -61,4 +60,3 @@ export const router = createBrowserRouter([
     element: <Register />,
   },
 ]);
-

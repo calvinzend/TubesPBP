@@ -18,7 +18,6 @@ export const allUser = async (req: Request, res: Response) : Promise<void> => {
 
 export const userDetail = async (req: Request, res: Response): Promise<void> => { 
   try {
-    console.log("masuk sini");
     const user = await User.findByPk(req.params.id);
     if (!user) {
       res.status(404).json({ error: "User not found" });

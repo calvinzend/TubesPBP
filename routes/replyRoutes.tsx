@@ -17,7 +17,7 @@ router.get("replies/:reply_id", reply);
 
 router.get("/user/:user_id/replies", userReply);
 
-router.get("/post/:tweet_id/replies", postReply);
+router.get("/posts/:tweet_id/replies", postReply);
 
 router.post("/posts/:tweet_id/replies", upload.single("image_image"), createReply);
 

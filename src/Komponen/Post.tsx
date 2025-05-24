@@ -1,9 +1,8 @@
 import { CiHeart } from "react-icons/ci";
 import { FaRegComment } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import {jwtDecode} from "jwt-decode";
-import { Link } from "react-router-dom";
-import { Reply } from "./Reply";
+import { jwtDecode } from "jwt-decode";
+import { Link, useNavigate } from "react-router-dom";
 
 interface PostProps {
   tweet_id: string;
@@ -16,19 +15,6 @@ interface PostProps {
   likeCount: number;
   replyCount: number;
   createdAt: string;
-}
-
-interface ReplyType {
-  reply_id: string;
-  content: string | null;
-  image_path: string | null;
-  replyToId: string | null;
-  user: {
-    name: string;
-    username: string;
-    profilePicture: string | null;
-  };
-  replies?: ReplyType[];
 }
 
 export const Post = ({
@@ -46,10 +32,11 @@ export const Post = ({
   const [userId, setUserId] = useState<string | null>(null);
   const [likes, setLikes] = useState<number>(likeCount);
   const [liked, setLiked] = useState<boolean>(false);
-  const [replies, setReplies] = useState<ReplyType[]>([]);
   const [replyContent, setReplyContent] = useState<string>("");
   const [replyImage, setReplyImage] = useState<File | null>(null);
   const [showReplyForm, setShowReplyForm] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -63,7 +50,8 @@ export const Post = ({
     }
   }, []);
 
-  const handleLike = async () => {
+  const handleLike = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!userId) return;
     try {
       const response = await fetch(`http://localhost:3000/like/${tweet_id}`, {
@@ -91,7 +79,6 @@ export const Post = ({
     }
   };
 
-  // Fungsi kirim reply ke server
   const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -99,8 +86,7 @@ export const Post = ({
 
     const formData = new FormData();
     formData.append("user_id", userId);
-    formData.append("parent_id", tweet_id);
-    if (replyContent.trim()) formData.append("content", replyContent);
+    formData.append("content", replyContent);
     if (replyImage) formData.append("image_path", replyImage);
 
     try {
@@ -113,10 +99,6 @@ export const Post = ({
       });
 
       if (response.ok) {
-        const newReplyData = await response.json();
-        // Refresh reply list
-        // fetchReplies();
-        // Reset form
         setReplyContent("");
         setReplyImage(null);
         setShowReplyForm(false);
@@ -126,17 +108,34 @@ export const Post = ({
     }
   };
 
-  
-  // Format angka like misal 1500 jadi 1.5k
   const formatCount = (count: number) =>
     count > 1000 ? (count / 1000).toFixed(1) + "k" : count.toString();
 
+  const handlePostClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("textarea") ||
+      target.closest("a")
+    ) {
+      return;
+    }
+    window.open(`/tweet/${tweet_id}`, "_blank");
+  };
+
   return (
-    <div style={{ borderBottom: "1px solid #ddd", padding: "16px 0" }}>
-      {/* User Info */}
+    <div
+      style={{ borderBottom: "1px solid #ddd", padding: "16px 0", cursor: "pointer" }}
+      onClick={handlePostClick}
+    >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <img
-          src={profilePicture || "/default-profile.png"}
+          src={
+            profilePicture
+              ? `http://localhost:3000/${profilePicture}`
+              : "http://localhost:3000/uploads/default-profile.png"
+          }
           alt="profile"
           style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }}
         />
@@ -145,16 +144,15 @@ export const Post = ({
           <Link
             to={`/userpage/${user_id}`}
             style={{ color: "#1da1f2", fontSize: 14, textDecoration: "none" }}
+            onClick={e => e.stopPropagation()}
           >
             @{handle}
           </Link>
         </div>
       </div>
 
-      {/* Content Text */}
       <p style={{ margin: "12px 0 8px 60px", whiteSpace: "pre-wrap" }}>{content}</p>
 
-      {/* Content Image */}
       {image_path && (
         <img
           src={`http://localhost:3000/${image_path}`}
@@ -170,7 +168,6 @@ export const Post = ({
         />
       )}
 
-      {/* Actions */}
       <div
         style={{
           display: "flex",
@@ -189,7 +186,10 @@ export const Post = ({
         </span>
 
         <span
-          onClick={() => setShowReplyForm((v) => !v)}
+          onClick={e => {
+            e.stopPropagation();
+            setShowReplyForm((v) => !v);
+          }}
           style={{ display: "flex", alignItems: "center", gap: 4, color: "#666" }}
         >
           <FaRegComment size={20} />
@@ -197,7 +197,6 @@ export const Post = ({
         </span>
       </div>
 
-      {/* Reply Form */}
       {showReplyForm && (
         <form onSubmit={handleReplySubmit} style={{ marginLeft: 60, marginBottom: 16 }}>
           <textarea
@@ -238,7 +237,6 @@ export const Post = ({
           </button>
         </form>
       )}
-
     </div>
   );
 };
