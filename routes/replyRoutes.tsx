@@ -19,9 +19,9 @@ router.get("/user/:user_id/replies", userReply);
 
 router.get("/posts/:tweet_id/replies", postReply);
 
-router.post("/posts/:tweet_id/replies", upload.single("image_image"), createReply);
+router.post("/posts/:tweet_id/replies", upload.single("image_path"), createReply);
 
-router.put("/replies/:reply_id", upload.single("image_image"), editReply);
+router.put("/replies/:reply_id", upload.single("image_path"), editReply);
 
 router.delete("/replies/:reply_id", deleteReply);
 

@@ -270,7 +270,13 @@ export const UserPage = () => {
           }}
         >
           <img
-            src={userData.profilePicture || "default-profile.png"}
+            src={
+              userData.profilePicture
+                ? userData.profilePicture.startsWith("http")
+                  ? userData.profilePicture
+                  : `http://localhost:3000/${userData.profilePicture}`
+                : "http://localhost:3000/uploads/default-profile.png"
+            }
             alt="profile"
             style={{
               width: "120px",
@@ -346,7 +352,13 @@ export const UserPage = () => {
               handle={`${userData.username}`}
               content={post.content}
               image_path={post.image_path || ""}
-              profilePicture={userData.profilePicture || "default-profile.png"}
+              profilePicture={
+                userData.profilePicture
+                  ? userData.profilePicture.startsWith("http")
+                    ? userData.profilePicture
+                    : `http://localhost:3000/${userData.profilePicture}`
+                  : "http://localhost:3000/uploads/default-profile.png"
+              } 
               user_id={userData.user_id}
               likeCount={Number(post.likeCount) || 0}
               replyCount={Number(post.replyCount) || 0}
@@ -395,7 +407,13 @@ export const UserPage = () => {
                   {followers.map(f => (
                     <li key={f.follower?.user_id || f.user_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
                       <img
-                        src={f.follower?.profilePicture || "default-profile.png"}
+                        src={
+                          f.follower?.profilePicture
+                            ? f.follower.profilePicture.startsWith("http")
+                              ? f.follower.profilePicture
+                              : `http://localhost:3000/${f.follower.profilePicture}`
+                            : "http://localhost:3000/uploads/default-profile.png"
+                        }
                         alt="profile"
                         style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
                       />
@@ -469,7 +487,13 @@ export const UserPage = () => {
                   {following.map(f => (
                     <li key={f.following?.user_id || f.following_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
                       <img
-                        src={f.following?.profilePicture || "default-profile.png"}
+                        src={
+                          f.following?.profilePicture
+                            ? f.following.profilePicture.startsWith("http")
+                              ? f.following.profilePicture
+                              : `http://localhost:3000/${f.following.profilePicture}`
+                            : "http://localhost:3000/uploads/default-profile.png"
+                        }
                         alt="profile"
                         style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
                       />

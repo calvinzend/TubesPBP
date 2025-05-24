@@ -166,10 +166,23 @@ export const getTweetThread = async (req: Request, res: Response): Promise<void>
     const { tweet_id } = req.params;
 
     const tweet = await Tweet.findByPk(tweet_id, {
-      include: {
-        model: User,
-        attributes: ['user_id', 'name', 'username', 'profilePicture'],
-      },
+      include: [
+        {
+          model: User,
+          attributes: ['user_id', 'name', 'username', 'profilePicture'],
+        },
+        {
+          model: Likes,
+          attributes: [],
+          required: false,
+        },
+        {
+          model: Tweet,
+          as: 'Replies',
+          attributes: [],
+          required: false,
+        },
+      ],
       attributes: {
         include: [
           [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('likes.like_id'))), 'likeCount'],
@@ -181,10 +194,23 @@ export const getTweetThread = async (req: Request, res: Response): Promise<void>
 
     const replies = await Tweet.findAll({
       where: { reply_id: tweet_id },
-      include: {
-        model: User,
-        attributes: ['user_id', 'name', 'username', 'profilePicture'],
-      },
+      include: [
+        {
+          model: User,
+          attributes: ['user_id', 'name', 'username', 'profilePicture'],
+        },
+        {
+          model: Likes, // <-- Add this for replies too
+          attributes: [],
+          required: false,
+        },
+        {
+          model: Tweet,
+          as: 'Replies',
+          attributes: [],
+          required: false,
+        },
+      ],
       attributes: {
         include: [
           [Sequelize.fn('COUNT', Sequelize.fn('DISTINCT', Sequelize.col('likes.like_id'))), 'likeCount'],

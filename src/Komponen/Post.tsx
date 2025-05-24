@@ -15,6 +15,8 @@ interface PostProps {
   likeCount: number;
   replyCount: number;
   createdAt: string;
+  onOpenDetail?: (tweet_id: string) => void;
+  refreshThread?: () => Promise<void>; // <-- Add this line
 }
 
 export const Post = ({
@@ -28,6 +30,7 @@ export const Post = ({
   likeCount,
   replyCount,
   createdAt,
+  onOpenDetail,
 }: PostProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [likes, setLikes] = useState<number>(likeCount);
@@ -121,7 +124,9 @@ export const Post = ({
     ) {
       return;
     }
-    window.open(`/tweet/${tweet_id}`, "_blank");
+    if (typeof onOpenDetail === "function") {
+      onOpenDetail(tweet_id);
+    }
   };
 
   return (
@@ -133,7 +138,9 @@ export const Post = ({
         <img
           src={
             profilePicture
-              ? `http://localhost:3000/${profilePicture}`
+              ? profilePicture.startsWith("http")
+                ? profilePicture
+                : `http://localhost:3000/${profilePicture}`
               : "http://localhost:3000/uploads/default-profile.png"
           }
           alt="profile"

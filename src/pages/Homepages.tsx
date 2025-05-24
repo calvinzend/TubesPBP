@@ -3,6 +3,7 @@ import { Post } from "../Komponen/Post";
 import { FaFileImage } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
+import { TweetDetail } from "./TweetDetail";
 
 interface DecodedToken {
   userId: string;
@@ -14,6 +15,8 @@ export const HomePage = () => {
   const [userData, setUserData] = useState<any>(null);
   const [postContent, setPostContent] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [showTweetModal, setShowTweetModal] = useState(false);
+  const [selectedTweetId, setSelectedTweetId] = useState<string | null>(null);
 
   // Define the PostType interface
   interface PostType {
@@ -109,19 +112,28 @@ export const HomePage = () => {
     }
   };
 
+  const handleOpenTweetModal = (tweet_id: string) => {
+    setSelectedTweetId(tweet_id);
+    setShowTweetModal(true);
+  };
+
   useEffect(() => {
     fetchPosts();
 
   }, []);
-
-
 
   return (
     <div style={{ maxWidth: "100%", margin: "0" }}>
 
       <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
         <img
-          src={userData?.profilePicture || "default-profile.png"}
+          src={
+            userData?.profilePicture
+              ? userData.profilePicture.startsWith("http")
+                ? userData.profilePicture
+                : `http://localhost:3000/${userData.profilePicture}`
+              : "http://localhost:3000/uploads/default-profile.png"
+          }
           alt="profile"
           style={{
             width: "40px",
@@ -180,16 +192,67 @@ export const HomePage = () => {
             handle={`${post.user?.username || "unknown"}`}
             content={post.content}
             image_path={post.image_path || ""}
-            profilePicture={post.user?.profilePicture || ""}
+            profilePicture={
+              post.user?.profilePicture
+                ? post.user.profilePicture.startsWith("http")
+                  ? post.user.profilePicture
+                  : `http://localhost:3000/${post.user.profilePicture}`
+                : "http://localhost:3000/uploads/default-profile.png"
+            }
             user_id={post.user?.user_id || ""}
             likeCount={Number(post.likeCount) || 0}
             replyCount={Number(post.replyCount) || 0}
             createdAt={post.createdAt}
+            onOpenDetail={handleOpenTweetModal}
           />
         ))}
-
+        
+        {/* tweet */}
+        {showTweetModal && selectedTweetId && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            zIndex: 3000,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center"
+          }}
+          onClick={() => setShowTweetModal(false)}
+        >
+          <div
+            style={{
+              background: "#222",
+              borderRadius: 12,
+              padding: 24,
+              minWidth: 700,
+              maxHeight: "100vh",
+              overflowY: "auto",
+              position: "relative"
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              style={{
+                position: "absolute",
+                top: 10,
+                right: 10,
+                background: "transparent",
+                color: "#fff",
+                border: "none",
+                fontSize: 24,
+                cursor: "pointer"
+              }}
+              onClick={() => setShowTweetModal(false)}
+            >
+              ×
+            </button>
+            <TweetDetail tweet_id={selectedTweetId} />
+          </div>
+        </div>
+      )}
       </div>
-
     </div>
   );
 };

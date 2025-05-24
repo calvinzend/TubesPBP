@@ -1,41 +1,27 @@
 import { useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Post } from "../Komponen/Post";
+import { Reply } from "../Komponen/Reply";
+import { ReplyType, UserType } from "../types/types";
 
-interface UserType {
-  user_id: string;
-  name: string;
-  username: string;
-  profilePicture: string | null;
-}
-
-interface ReplyType {
-  tweet_id: string;
-  reply_id: string;
-  content: string | null;
-  image_path: string | null;
-  user: UserType;
-  likeCount?: number;
-  replyCount?: number;
-  createdAt: string;
-}
-
-export const TweetDetail = () => {
-  const { tweet_id } = useParams<{ tweet_id: string }>();
+export const TweetDetail = ({ tweet_id: propTweetId }: { tweet_id?: string }) => {
+  const params = useParams<{ tweet_id: string }>();
+  const tweet_id = propTweetId || params.tweet_id;
   const [tweet, setTweet] = useState<any>(null);
   const [replies, setReplies] = useState<ReplyType[]>([]);
 
-  useEffect(() => {
-    const fetchThread = async () => {
-      const res = await fetch(`http://localhost:3000/posts/${tweet_id}/thread`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      });
-      const data = await res.json();
-      setTweet(data.tweet);
-      setReplies(data.replies || []);
-    };
-    fetchThread();
+  const fetchThread = useCallback(async () => {
+    const res = await fetch(`http://localhost:3000/posts/${tweet_id}/thread`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    });
+    const data = await res.json();
+    setTweet(data.tweet);
+    setReplies(data.replies || []);
   }, [tweet_id]);
+
+  useEffect(() => {
+    if (tweet_id) fetchThread();
+  }, [tweet_id, fetchThread]);
 
   if (!tweet) return <div style={{ color: "#fff" }}>Loading...</div>;
 
@@ -47,28 +33,31 @@ export const TweetDetail = () => {
         handle={tweet.user?.username || "unknown"}
         content={tweet.content}
         image_path={tweet.image_path}
-        profilePicture={tweet.user?.profilePicture}
+        profilePicture={
+          tweet.user?.profilePicture
+            ? tweet.user.profilePicture.startsWith("http")
+              ? tweet.user.profilePicture
+              : `http://localhost:3000/${tweet.user.profilePicture}`
+            : "http://localhost:3000/uploads/default-profile.png"
+        }
         user_id={tweet.user?.user_id}
         likeCount={Number(tweet.likeCount) || 0}
         replyCount={Number(tweet.replyCount) || 0}
         createdAt={tweet.createdAt}
+        refreshThread={fetchThread} // Pass refresh function
       />
-      <h3 style={{ marginLeft: 20 }}>Replies</h3>
+      <h3 style={{ marginLeft: 20, padding: "20px 0 20px 0" }}>Replies</h3>
       <div style={{ marginLeft: 20 }}>
         {replies.length > 0 ? (
           replies.map((reply) => (
-            <Post
+            <Reply
               key={reply.tweet_id}
+              reply={reply}
               tweet_id={reply.tweet_id}
-              name={reply.user?.name || "Unknown"}
-              handle={reply.user?.username || "unknown"}
-              content={reply.content || ""}
-              image_path={reply.image_path || ""}
-              profilePicture={reply.user?.profilePicture || ""}
-              user_id={reply.user?.user_id || ""}
-              likeCount={Number(reply.likeCount) || 0}
-              replyCount={Number(reply.replyCount) || 0}
-              createdAt={reply.createdAt}
+              userId={tweet.user?.user_id}
+              setReplies={setReplies}
+              depth={0}
+              refreshThread={fetchThread} // Pass refresh function
             />
           ))
         ) : (
