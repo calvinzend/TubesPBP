@@ -2,7 +2,7 @@
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up (queryInterface, Sequelize) {
+  async up(queryInterface, Sequelize) {
     await queryInterface.createTable('tweets', {
       tweet_id: {
         type: Sequelize.UUID,
@@ -37,6 +37,17 @@ module.exports = {
         onUpdate: 'CASCADE',
         allowNull: true
       },
+      root_id: {
+        type: Sequelize.UUID,
+        references: {
+          model: 'tweets',
+          key: 'tweet_id'
+        },
+
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        allowNull: true
+      },
       createdAt: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -50,7 +61,8 @@ module.exports = {
     })
   },
 
-  async down (queryInterface, Sequelize) {
+  async down(queryInterface, Sequelize) {
     await queryInterface.dropTable('tweets');
+    await queryInterface.dropTable('likes');
   }
 };

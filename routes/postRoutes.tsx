@@ -4,7 +4,7 @@ import {
   allPost,
   post,
   postUser,
-  postReplies,
+  getTweetThread,
   createPost,
 } from "../controller/postController";
 import { storage } from "../utils/multerStorage"; 
@@ -19,7 +19,7 @@ router.get("/posts/:id", post);
 
 router.get("/posts/user/:user_id", postUser);
 
-router.get("/:tweet_id/replies", postReplies);
+router.get("/posts/:tweet_id/thread", getTweetThread);
 
 router.post("/posts", upload.single("image"), createPost);
 

@@ -13,9 +13,7 @@ export const allReply = async (req: Request, res: Response): Promise<void> => {
         },
         });
 
-        const countLike = await Likes.count({
-        where: { tweet_id: tweet_id },
-        });
+        const countLike = await Likes.count({ where: { tweet_id } });
 
         res.status(200).json({ likes: countLike, liked: !!like });
     } catch (error) {

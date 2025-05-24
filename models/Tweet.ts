@@ -45,6 +45,19 @@ export class Tweet extends Model {
         onUpdate: 'CASCADE'
     })
     declare reply_id: string;
+    
+    @Column({
+        type: DataType.UUID,
+        references: {
+          model: 'tweets',
+          key: 'tweet_id'
+        },
+
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        allowNull: true
+    })
+    declare root_id: string;
 
     @BelongsTo(() => User)
     user!: User;
@@ -54,7 +67,6 @@ export class Tweet extends Model {
 
     @HasMany(() => Tweet, { foreignKey: "reply_id", as: "Replies" })
     declare replies: Tweet[];
-
 
     @HasMany(() => Likes, 'tweet_id')
     likes!: Likes[];

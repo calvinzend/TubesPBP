@@ -98,7 +98,6 @@ export const addFollower = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    // Prevent a user from following themselves
     if (user_id === following_id) {
       res.status(400).json({ error: "A user cannot follow themselves." });
       return;
@@ -106,23 +105,31 @@ export const addFollower = async (req: Request, res: Response): Promise<void> =>
 
     const existingFollower = await Follower.findOne({ where: { following_id, user_id } });
 
+    let action: "followed" | "unfollowed";
     if (existingFollower) {
-      // If already following, remove the follower relationship (unfollow)
       await existingFollower.destroy();
-      res.status(200).json({ message: "Unfollowed successfully" });
-      return;
+      action = "unfollowed";
     } else {
       await Follower.create({
         follow_id: uuidv4(),
-        following_id, // The user being followed
-        user_id,      // The user who follows
+        following_id,
+        user_id,
       });
-      res.status(200).json({ message: "Followed successfully" });
-      return;
+      action = "followed";
     }
+
+    // Get updated followers count for the followed user
+    const followersCount = await Follower.count({ where: { following_id } });
+    // Check if the current user is following (should be false if just unfollowed, true if just followed)
+    const isFollowing = action === "followed";
+
+    res.status(200).json({
+      message: action === "followed" ? "Followed successfully" : "Unfollowed successfully",
+      followersCount,
+      isFollowing,
+    });
   } catch (error) {
     console.error("Error in /follow:", error);
     res.status(500).json({ error: "Internal server error" });
-    return;
   }
 };

@@ -25,7 +25,7 @@ export const UserPage = () => {
   const [showFollowersModal, setShowFollowersModal] = useState(false);
   const [following, setFollowing] = useState<any[]>([]);
   const [showFollowingModal, setShowFollowingModal] = useState(false);
-
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const handleResize = () => setIsMobile(window.innerWidth <= 768);
   useEffect(() => {
@@ -128,6 +128,23 @@ export const UserPage = () => {
     fetchPosts();
   }, [paramUserId, loggedInUserId]);
 
+  useEffect(() => {
+    if (!userId || !loggedInUserId) return;
+    const checkFollowing = async () => {
+      const response = await fetch(`http://localhost:3000/followers/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await response.json();
+      setFollowersCount(data.followers?.length || 0);
+      const found = (data.followers || []).some(
+        (f: any) => f.follower?.user_id === loggedInUserId
+      );
+      setIsFollowing(found);
+    };
+    checkFollowing();
+  }, [userId, loggedInUserId]);
 
   const updateUser = async () => {
     try {
@@ -178,6 +195,11 @@ export const UserPage = () => {
       });
       const data = await response.json();
       setFollowers(data.followers || []);
+      // Check if logged-in user is in followers
+      const found = (data.followers || []).some(
+        (f: any) => f.follower?.user_id === loggedInUserId
+      );
+      setIsFollowing(found);
       setShowFollowersModal(true);
     } catch (error) {
       console.error("Error fetching followers:", error);
@@ -196,6 +218,22 @@ export const UserPage = () => {
       setShowFollowingModal(true);
     } catch (error) {
       console.error("Error fetching following:", error);
+    }
+  };
+
+  const handleFollow = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/follow/${userId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      const data = await response.json();
+      setFollowersCount(data.followersCount || 0);
+      setIsFollowing(data.isFollowing);
+    } catch (error) {
+      console.error("Error following user:", error);
     }
   };
 
@@ -232,7 +270,13 @@ export const UserPage = () => {
           }}
         >
           <img
-            src={userData.profilePicture || "default-profile.png"}
+            src={
+              userData.profilePicture
+                ? userData.profilePicture.startsWith("http")
+                  ? userData.profilePicture
+                  : `http://localhost:3000/${userData.profilePicture}`
+                : "http://localhost:3000/uploads/default-profile.png"
+            }
             alt="profile"
             style={{
               width: "120px",
@@ -258,9 +302,10 @@ export const UserPage = () => {
               {loggedInUserId !== userId && (
                 <div style={{ marginTop: "20px" }}>
                   <button
+                    onClick={handleFollow}
                     style={{
-                      backgroundColor: "#fff",
-                      color: "#000",
+                      backgroundColor: isFollowing ? "#1da1f2" : "#fff",
+                      color: isFollowing ? "#fff" : "#000",
                       border: "none",
                       borderRadius: "30px",
                       padding: "8px 20px",
@@ -269,7 +314,7 @@ export const UserPage = () => {
                       width: isMobile ? "100%" : "auto",
                     }}
                   >
-                    Follow
+                    {isFollowing ? "Followed" : "Follow"}
                   </button>
                 </div>
               )}
@@ -307,10 +352,16 @@ export const UserPage = () => {
               handle={`${userData.username}`}
               content={post.content}
               image_path={post.image_path || ""}
-              profilePicture={userData.profilePicture || "default-profile.png"}
+              profilePicture={
+                userData.profilePicture
+                  ? userData.profilePicture.startsWith("http")
+                    ? userData.profilePicture
+                    : `http://localhost:3000/${userData.profilePicture}`
+                  : "http://localhost:3000/uploads/default-profile.png"
+              } 
               user_id={userData.user_id}
-              likeCount={post.likescount || 0}
-              replyCount={post.replyCount || 0}
+              likeCount={Number(post.likeCount) || 0}
+              replyCount={Number(post.replyCount) || 0}
               createdAt={post.createdAt || ""}
             />
           ))
@@ -319,260 +370,278 @@ export const UserPage = () => {
         )}
       </div>
       {/* Followers Modal */}
-      {showFollowersModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2000,
-          }}
-          onClick={() => setShowFollowersModal(false)}
-        >
+      {
+        showFollowersModal && (
           <div
             style={{
-              backgroundColor: "#222",
-              padding: "20px",
-              borderRadius: "10px",
-              minWidth: "300px",
-              maxHeight: "70vh",
-              overflowY: "auto",
-              color: "white",
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 2000,
             }}
-            onClick={e => e.stopPropagation()}
+            onClick={() => setShowFollowersModal(false)}
           >
-            <h3>Followers</h3>
-            {followers.length === 0 ? (
-              <p>No followers yet.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {followers.map(f => (
-                  <li key={f.follower?.user_id || f.user_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
-                    <img
-                      src={f.follower?.profilePicture || "default-profile.png"}
-                      alt="profile"
-                      style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
-                    />
-                    <span>
-                      <strong>{f.follower?.name}</strong>{" "}
-                      <Link
-                        to={`/userpage/${f.follower?.user_id}`}
-                        style={{ color: "#1da1f2", fontSize: 14, textDecoration: "none" }}
-                        onClick={() => setShowFollowersModal(false)}
-                      >
-                        @{f.follower?.username}
-                      </Link>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button
-              style={{
-                marginTop: "15px",
-                background: "#fff",
-                color: "#000",
-                border: "none",
-                borderRadius: "8px",
-                padding: "8px 16px",
-                cursor: "pointer",
-              }}
-              onClick={() => setShowFollowersModal(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {/* Following Modal */}
-      {showFollowingModal && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0,0,0,0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 2000,
-          }}
-          onClick={() => setShowFollowingModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: "#222",
-              padding: "20px",
-              borderRadius: "10px",
-              minWidth: "300px",
-              maxHeight: "70vh",
-              overflowY: "auto",
-              color: "white",
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <h3>Following</h3>
-            {following.length === 0 ? (
-              <p>Not following anyone yet.</p>
-            ) : (
-              <ul style={{ listStyle: "none", padding: 0 }}>
-                {following.map(f => (
-                  <li key={f.following?.user_id || f.following_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
-                    <img
-                      src={f.following?.profilePicture || "default-profile.png"}
-                      alt="profile"
-                      style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
-                    />
-                    <span>
-                      <strong>{f.following?.name}</strong>{" "}
-                      <Link
-                        to={`/userpage/${f.following?.user_id}`}
-                        style={{ color: "#1da1f2", fontSize: 14, textDecoration: "none" }}
-                        onClick={() => setShowFollowingModal(false)}
-                      >
-                        @{f.following?.username}
-                      </Link>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <button
-              style={{
-                marginTop: "15px",
-                background: "#fff",
-                color: "#000",
-                border: "none",
-                borderRadius: "8px",
-                padding: "8px 16px",
-                cursor: "pointer",
-              }}
-              onClick={() => setShowFollowingModal(false)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {/* Edit Modal */}
-      {showModal && loggedInUserId === userId && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.6)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#1e1e1e",
-              padding: "30px",
-              borderRadius: "20px",
-              width: "100%",
-              maxWidth: "400px",
-              color: "white",
-              textAlign: "center",
-            }}
-          >
-            <h2>Edit Profile</h2>
-            <input
-              type="text"
-              placeholder="Username"
-              defaultValue={userData.username}
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, username: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              placeholder="Name"
-              defaultValue={userData.name}
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, name: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              defaultValue={userData.email}
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, email: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
-              type="text"
-              placeholder="Bio"
-              defaultValue={userData.bio}
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, bio: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              placeholder="Old Password"
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, oldPassword: e.target.value }))
-              }
-              style={inputStyle}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              onChange={(e) =>
-                setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
-              }
-              style={inputStyle}
-            />
-
             <div
               style={{
-                marginTop: "20px",
-                display: "flex",
-                justifyContent: "space-between",
-                gap: "10px",
+                backgroundColor: "#222",
+                padding: "20px",
+                borderRadius: "10px",
+                minWidth: "300px",
+                maxHeight: "70vh",
+                overflowY: "auto",
+                color: "white",
               }}
+              onClick={e => e.stopPropagation()}
             >
+              <h3>Followers</h3>
+              {followers.length === 0 ? (
+                <p>No followers yet.</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0 }}>
+                  {followers.map(f => (
+                    <li key={f.follower?.user_id || f.user_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
+                      <img
+                        src={
+                          f.follower?.profilePicture
+                            ? f.follower.profilePicture.startsWith("http")
+                              ? f.follower.profilePicture
+                              : `http://localhost:3000/${f.follower.profilePicture}`
+                            : "http://localhost:3000/uploads/default-profile.png"
+                        }
+                        alt="profile"
+                        style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
+                      />
+                      <span>
+                        <strong>{f.follower?.name}</strong>{" "}
+                        <Link
+                          to={`/userpage/${f.follower?.user_id}`}
+                          style={{ color: "#1da1f2", fontSize: 14, textDecoration: "none" }}
+                          onClick={() => setShowFollowersModal(false)}
+                        >
+                          @{f.follower?.username}
+                        </Link>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <button
-                onClick={() => setShowModal(false)}
-                style={buttonStyle("#555", "white")}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={updateUser}
-                disabled={!isFormValid}
                 style={{
-                  ...buttonStyle("white", "black"),
-                  opacity: isFormValid ? 1 : 0.5,
-                  cursor: isFormValid ? "pointer" : "not-allowed",
+                  marginTop: "15px",
+                  background: "#fff",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
                 }}
+                onClick={() => setShowFollowersModal(false)}
               >
-                Save
+                Close
               </button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+      {/* Following Modal */}
+      {
+        showFollowingModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0,0,0,0.7)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 2000,
+            }}
+            onClick={() => setShowFollowingModal(false)}
+          >
+            <div
+              style={{
+                backgroundColor: "#222",
+                padding: "20px",
+                borderRadius: "10px",
+                minWidth: "300px",
+                maxHeight: "70vh",
+                overflowY: "auto",
+                color: "white",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3>Following</h3>
+              {following.length === 0 ? (
+                <p>Not following anyone yet.</p>
+              ) : (
+                <ul style={{ listStyle: "none", padding: 0 }}>
+                  {following.map(f => (
+                    <li key={f.following?.user_id || f.following_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
+                      <img
+                        src={
+                          f.following?.profilePicture
+                            ? f.following.profilePicture.startsWith("http")
+                              ? f.following.profilePicture
+                              : `http://localhost:3000/${f.following.profilePicture}`
+                            : "http://localhost:3000/uploads/default-profile.png"
+                        }
+                        alt="profile"
+                        style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
+                      />
+                      <span>
+                        <strong>{f.following?.name}</strong>{" "}
+                        <Link
+                          to={`/userpage/${f.following?.user_id}`}
+                          style={{ color: "#1da1f2", fontSize: 14, textDecoration: "none" }}
+                          onClick={() => setShowFollowingModal(false)}
+                        >
+                          @{f.following?.username}
+                        </Link>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button
+                style={{
+                  marginTop: "15px",
+                  background: "#fff",
+                  color: "#000",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "8px 16px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowFollowingModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )
+      }
+      {/* Edit Modal */}
+      {
+        showModal && loggedInUserId === userId && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.6)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 1000,
+            }}
+          >
+            <div
+              style={{
+                backgroundColor: "#1e1e1e",
+                padding: "30px",
+                borderRadius: "20px",
+                width: "100%",
+                maxWidth: "400px",
+                color: "white",
+                textAlign: "center",
+              }}
+            >
+              <h2>Edit Profile</h2>
+              <input
+                type="text"
+                placeholder="Username"
+                defaultValue={userData.username}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, username: e.target.value }))
+                }
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="Name"
+                defaultValue={userData.name}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, name: e.target.value }))
+                }
+                style={inputStyle}
+              />
+              <input
+                type="email"
+                placeholder="Email"
+                defaultValue={userData.email}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, email: e.target.value }))
+                }
+                style={inputStyle}
+              />
+              <input
+                type="text"
+                placeholder="Bio"
+                defaultValue={userData.bio}
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, bio: e.target.value }))
+                }
+                style={inputStyle}
+              />
+              <input
+                type="password"
+                placeholder="Old Password"
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, oldPassword: e.target.value }))
+                }
+                style={inputStyle}
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                onChange={(e) =>
+                  setUpdatedUser((prev: any) => ({ ...prev, password: e.target.value }))
+                }
+                style={inputStyle}
+              />
+
+              <div
+                style={{
+                  marginTop: "20px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  onClick={() => setShowModal(false)}
+                  style={buttonStyle("#555", "white")}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={updateUser}
+                  disabled={!isFormValid}
+                  style={{
+                    ...buttonStyle("white", "black"),
+                    opacity: isFormValid ? 1 : 0.5,
+                    cursor: isFormValid ? "pointer" : "not-allowed",
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 };
 

@@ -3,7 +3,7 @@ import { Tweet } from "../models/Tweet";
 import { User } from "../models/User";
 import { v4 as uuidv4 } from "uuid";
 
-
+// to get spesific reply
 export const reply = async (req: Request, res: Response): Promise<void> => {
    try {
        const { reply_id } = req.params;
@@ -56,33 +56,30 @@ export const userReply = async (req: Request, res: Response): Promise<void> => {
     }
 }
 
-
+// to get tweet reply
 export const postReply = async (req: Request, res: Response): Promise<void> => {
-    try {
-        const { tweet_id } = req.params;
+  try {
+    const { tweet_id } = req.params;
 
-        const replies = await Tweet.findAll({
-        where: { reply_id: tweet_id },
-        include: {
-            model: User,
-            attributes: ['name', 'username', 'profilePicture'],
-        },
-        order: [['createdAt', 'ASC']],
-        });
+    const replies = await Tweet.findAll({
+      where: { reply_id: tweet_id },
+      include: {
+        model: User,
+        attributes: ['name', 'username', 'profilePicture'],
+      },
+      order: [['createdAt', 'ASC']],
+    });
 
-        if (replies.length === 0) {
-            res.status(404).json({ error: "No replies found" });
-        }
-        
-        res.status(200).json({
-        replies,
-        message: "Replies fetched successfully"
-        });
-    } catch (error) {
-        console.error("Error fetching replies:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-}
+    // Always return 200 with an array
+    res.status(200).json({
+      replies,
+      message: "Replies fetched successfully"
+    });
+  } catch (error) {
+    console.error("Error fetching replies:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
 
 export const createReply = async (req: Request, res: Response): Promise<void> => {
     try {
