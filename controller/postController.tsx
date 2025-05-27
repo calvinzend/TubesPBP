@@ -3,7 +3,8 @@ import { Tweet } from "../models/Tweet";
 import { User } from "../models/User";
 import { v4 as uuidv4 } from "uuid";
 import { Likes } from "../models/Likes";
-import { Sequelize } from 'sequelize-typescript'
+import { Sequelize } from 'sequelize-typescript';
+import { sendResponse, sendError } from "../utils/response";
 
 export const allPost = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -36,10 +37,10 @@ export const allPost = async (req: Request, res: Response): Promise<void> => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.json(posts);
+    sendResponse(res, { posts });
   } catch (error) {
     console.error("Error fetching posts:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
 };
 
@@ -49,20 +50,20 @@ export const post = async (req: Request, res: Response): Promise<void> => {
       include: [
         {
           model: Tweet,
-          as: 'Replies' // Use the exact alias as in your model
+          as: 'Replies'
         }
       ]
     });
     if (!post) {
-      res.status(404).json({ error: "Post not found" });
+      sendError(res, "Post not found", 404);
       return;
     }
-    res.json(post);
+    sendResponse(res, { post });
   } catch (error) {
     console.error("Error fetching post:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
-}
+};
 
 export const postUser = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -98,13 +99,12 @@ export const postUser = async (req: Request, res: Response): Promise<void> => {
       order: [['createdAt', 'DESC']],
     });
 
-    res.json(posts);
+    sendResponse(res, { posts });
   } catch (error) {
     console.error("Error fetching posts by user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
 };
-
 
 export const postReplies = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -120,29 +120,28 @@ export const postReplies = async (req: Request, res: Response): Promise<void> =>
     });
 
     if (replies.length === 0) {
-      res.status(404).json({ error: "No replies found" });
+      sendError(res, "No replies found", 404);
+      return;
     }
 
-    res.status(200).json({
+    sendResponse(res, {
       replies,
       message: "Replies fetched successfully"
     });
   } catch (error) {
     console.error("Error fetching replies:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
-}
+};
 
 export const createPost = async (req: Request, res: Response): Promise<void> => {
-  console.log("Request body:", req.body);
-  console.log("Request file:", req.file);
-
   try {
     const { user_id, content } = req.body;
     const file = req.file;
 
-    if (!content) {
-      res.status(400).json({ error: "Content is required" });
+    if (!content && !file) {
+      sendError(res, "Isi text atau upload gambar!", 400);
+      return;
     }
 
     const tweet = await Tweet.create({
@@ -153,14 +152,13 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
       reply_id: null,
     });
 
-    res.status(201).json(tweet);
+    sendResponse(res, { tweet }, 201);
   } catch (error) {
     console.error("Error creating post:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
-}
+};
 
-// Get a tweet and all its direct replies (thread)
 export const getTweetThread = async (req: Request, res: Response): Promise<void> => {
   try {
     const { tweet_id } = req.params;
@@ -200,7 +198,7 @@ export const getTweetThread = async (req: Request, res: Response): Promise<void>
           attributes: ['user_id', 'name', 'username', 'profilePicture'],
         },
         {
-          model: Likes, // <-- Add this for replies too
+          model: Likes,
           attributes: [],
           required: false,
         },
@@ -221,12 +219,66 @@ export const getTweetThread = async (req: Request, res: Response): Promise<void>
       order: [['createdAt', 'ASC']],
     });
 
-    res.status(200).json({
+    sendResponse(res, {
       tweet,
       replies,
     });
   } catch (error) {
     console.error("Error fetching tweet thread:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
+  }
+};
+
+export const editPost = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const file = req.file;
+
+    const post = await Tweet.findByPk(id);
+    if (!post) {
+      sendError(res, "Post not found", 404);
+      return;
+    }
+
+    post.content = content ?? post.content;
+    if (file) {
+      post.image_path = file.path;
+    }
+    await post.save();
+
+    sendResponse(res, { message: "Post updated", post });
+  } catch (error) {
+    console.error("Error editing post:", error);
+    sendError(res, "Internal server error", 500);
+  }
+};
+
+// Delete post and all its replies recursively
+export const deletePost = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Recursive function to delete replies
+    const deleteWithReplies = async (tweetId: string) => {
+      const replies = await Tweet.findAll({ where: { reply_id: tweetId } });
+      for (const reply of replies) {
+        await deleteWithReplies(reply.tweet_id);
+      }
+      await Tweet.destroy({ where: { tweet_id: tweetId } });
+    };
+
+    const post = await Tweet.findByPk(id);
+    if (!post) {
+      sendError(res, "Post not found", 404);
+      return;
+    }
+
+    await deleteWithReplies(id);
+
+    sendResponse(res, { message: "Post and its replies deleted" });
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    sendError(res, "Internal server error", 500);
   }
 };

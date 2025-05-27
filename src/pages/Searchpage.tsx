@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
+import { Link } from "react-router-dom";
+import { api } from "../../utils/api";
 
 export const SearchPage = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const handleResize = () => {
     setIsMobile(window.innerWidth <= 768);
@@ -14,6 +19,28 @@ export const SearchPage = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        `${api.base}/users/search?q=${encodeURIComponent(query)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await res.json();
+      setResults(data.users || []);
+    } catch {
+      setResults([]);
+    }
+    setLoading(false);
+  };
+
   return (
     <div
       style={{
@@ -23,7 +50,8 @@ export const SearchPage = () => {
         color: "white",
       }}
     >
-      <div
+      <form
+        onSubmit={handleSearch}
         style={{
           display: "flex",
           alignItems: "center",
@@ -33,12 +61,15 @@ export const SearchPage = () => {
           width: "100%",
           maxWidth: isMobile ? "100%" : "600px",
           padding: "6px 12px",
+          marginBottom: 24,
         }}
       >
         <CiSearch size={22} style={{ marginRight: "10px", color: "white" }} />
         <input
           type="text"
-          placeholder="Search"
+          placeholder="Search user"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
           style={{
             background: "transparent",
             border: "none",
@@ -49,6 +80,7 @@ export const SearchPage = () => {
           }}
         />
         <button
+          type="submit"
           style={{
             background: "white",
             color: "black",
@@ -63,7 +95,50 @@ export const SearchPage = () => {
         >
           Search
         </button>
-      </div>
+      </form>
+
+      {loading && <div style={{ color: "#aaa" }}>Loading...</div>}
+      {!loading && results.length > 0 && (
+        <div style={{ maxWidth: 600 }}>
+          {results.map((user) => (
+            <Link
+              to={`/userpage/${user.user_id}`}
+              key={user.user_id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                padding: "12px 0",
+                borderBottom: "1px solid #333",
+                color: "white",
+                textDecoration: "none",
+              }}
+            >
+              <img
+                src={api.getProfilePicture(user.profilePicture)}
+                alt="profile"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  background: "#222",
+                }}
+              />
+              <div>
+                <div style={{ fontWeight: 600 }}>{user.name}</div>
+                <div style={{ color: "#1da1f2", fontSize: 14 }}>
+                  @{user.username}
+                </div>
+                <div style={{ color: "#aaa", fontSize: 13 }}>{user.bio}</div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+      {!loading && query && results.length === 0 && (
+        <div style={{ color: "#aaa", marginTop: 24 }}>No user found.</div>
+      )}
     </div>
   );
 };

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { FaSquareXTwitter } from "react-icons/fa6";
 
+import { login } from "../../utils/api";
+
 export const Login = () => {
   const navigate = useNavigate();
   const [username, setUsernameOrEmail] = useState("");
@@ -9,33 +11,15 @@ export const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const loginData = {
-      username,
-      password,
-    };
-
+    if (password.length < 8) {
+      alert("Password minimal 8 karakter!");
+      return;
+    }
     try {
-      const response = await fetch("http://localhost:3000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem("token", data.token); 
-
-        navigate("/");
-      } else {
-        const errorData = await response.json();
-        alert(errorData.message || "Username atau Password salah!");
-      }
-    } catch (error) {
-      console.error("Terjadi kesalahan saat login: ", error);
-      alert("Terjadi kesalahan saat login!");
+      const data = await login(username, password);
+      navigate("/");
+    } catch (error: any) {
+      alert(error.message || "Username atau Password salah!");
     }
   };
 

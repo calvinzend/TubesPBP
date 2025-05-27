@@ -1,78 +1,68 @@
 import { Request, Response } from "express";
-
+import { Op } from "sequelize";
 import { User } from "../models/User";
 import bcrypt from "bcrypt";
 import { Follower } from "../models/Follower";
+import { sendResponse, sendError } from "../utils/response";
 
-
-
-export const allUser = async (req: Request, res: Response) : Promise<void> => {
-    try {
+export const allUser = async (req: Request, res: Response): Promise<void> => {
+  try {
     const users = await User.findAll();
-    res.json(users);
+    sendResponse(res, { users });
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
-}
+};
 
-export const userDetail = async (req: Request, res: Response): Promise<void> => { 
+export const userDetail = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) {
-      res.status(404).json({ error: "User not found" });
+      sendError(res, "User not found", 404);
       return;
     }
 
-    // Count followers (how many users follow this user)
-    console.log("Coba ambil count follower");
     const followersCount = await Follower.count({
       where: { following_id: req.params.id }
     });
-    
-    // Count following (how many users this user follows)
-    console.log("Coba ambil count following");
+
     const followingCount = await Follower.count({
       where: { user_id: req.params.id }
     });
 
-    res.json({
+    sendResponse(res, {
       user,
       followersCount,
       followingCount
     });
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
-}
+};
 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) {
-      res.status(404).json({ error: "User not found" });
+      sendError(res, "User not found", 404);
       return;
     }
 
     const { oldPassword, password, ...otherFields } = req.body;
 
-    if (password !== undefined) {
+    if (password) {
       if (!oldPassword) {
-        res.status(400).json({ error: "Password lama harus diisi" });
+        sendError(res, "Password lama harus diisi", 400);
         return;
       }
 
       const isMatch = await bcrypt.compare(oldPassword, user.password);
       if (!isMatch) {
-        res.status(400).json({ error: "Password lama salah" });
+        sendError(res, "Password lama salah", 400);
         return;
       }
-
-      // if (password.length < 6) {
-      //   res.status(400).json({ error: "Password baru minimal 6 karakter" });
-      //   return;
-      // }
 
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -82,31 +72,52 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
       await user.update(otherFields);
     }
 
-    res.json({
+    sendResponse(res, {
       message: "User updated successfully",
       user,
     });
   } catch (error: any) {
     console.error("Error updating user:", error);
-    res.status(500).json({ error: error.message || "Internal server error" });
+    sendError(res, error.message || "Internal server error", 500);
   }
 };
-
 
 export const deleteUser = async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await User.findByPk(req.params.id);
     if (!user) {
-      res.status(404).json({ error: "User not found" });
+      sendError(res, "User not found", 404);
       return;
     }
 
     await user.destroy();
 
-    res.json({ message: "User deleted successfully" });
+    sendResponse(res, { message: "User deleted successfully" });
   } catch (error) {
     console.error("Error deleting user:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
 };
 
+export const searchUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const q = req.query.q as string;
+    if (!q) {
+      sendError(res, "Query kosong", 400);
+      return;
+    }
+    const users = await User.findAll({
+      where: {
+        [Op.or]: [
+          { username: { [Op.like]: `%${q}%` } },
+          { name: { [Op.like]: `%${q}%` } },
+        ],
+      },
+      attributes: ["user_id", "username", "name", "profilePicture", "bio"],
+    });
+    sendResponse(res, { users });
+  } catch (error) {
+    console.error("Error searching user:", error);
+    sendError(res, "Internal server error", 500);
+  }
+};

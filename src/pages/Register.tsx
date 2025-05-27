@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { FaSquareXTwitter } from "react-icons/fa6";
+import { register } from "../../utils/api";
 
 export const Register = () => {
   const navigate = useNavigate();
@@ -13,6 +14,11 @@ export const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (password.length < 8) {
+      alert("Password minimal 8 karakter!");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("username", username);
     formData.append("password", password);
@@ -21,19 +27,10 @@ export const Register = () => {
     if (image) formData.append("profilePicture", image);
 
     try {
-      const response = await fetch("http://localhost:3000/register", {
-        method: "POST",
-        body: formData, // Kirim formData
-      });
-
-      if (response.ok) {
-        navigate("/login");
-      } else {
-        const errorData = await response.json();
-        console.log("Error: ", errorData);
-      }
-    } catch (error) {
-      console.error("Terjadi kesalahan saat mengirim data: ", error);
+      await register(formData);
+      navigate("/login");
+    } catch (error: any) {
+      alert(error.message || "Gagal daftar!");
     }
   };
 

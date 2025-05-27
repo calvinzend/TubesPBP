@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { User } from "../models/User";
+import { sendError } from "../utils/response";
 
 declare global {
   namespace Express {
@@ -21,28 +22,25 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
 
       const authorization = req.headers.authorization;
       if (!authorization) {
-        return res.status(401).json({ error: 'Authorization header missing' });
+        return sendError(res, "Authorization header missing", 401);
       }
 
       const token = authorization.split(" ")[1];
       if (!token) {
-        return res.status(401).json({ error: 'Token missing' });
+        return sendError(res, "Token missing", 401);
       }
 
       const decoded = jwt.verify(token, secretKey) as { userId: string };
       const user = await User.findByPk(decoded.userId);
 
-      console.log("Decoded user:", decoded);
-      console.log("User found:", user);
-
       if (!user) {
-        return res.status(401).json({ error: 'User not found' });
+        return sendError(res, "User not found", 401);
       }
 
       req.user = user;
       next();
     } catch (err) {
-      return res.status(401).json({ error: 'Unauthorized - Invalid token' });
+      return sendError(res, "Unauthorized - Invalid token", 401);
     }
   })();
 };

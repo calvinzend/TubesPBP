@@ -4,21 +4,19 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/User";
 import { v4 as uuidv4 } from "uuid";
 import { Op } from "sequelize";
+import { sendResponse, sendError } from "../utils/response"; // Tambahkan import ini
 
 const secretKey = process.env.JWT_SECRET || "your_secret_key";
 
 
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
-        console.log('req.body:', req.body); 
-        console.log('req.file:', req.file);
-    
-    
         const { username, password, name, email } = req.body;
         const file = req.file;
     
         if (!username || !password || !name || !email) {
-          res.status(400).json({ error: "Semua field wajib diisi!" });
+          sendError(res, "Semua field wajib diisi!", 400);
+          return;
         }
     
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,10 +30,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           profilePicture: file ? file.path : null,
         });
     
-        res.status(201).json({ message: "User created successfully" });
+        sendResponse(res, { message: "User created successfully" }, 201);
       } catch (error) {
         console.error("Error creating user:", error);
-        res.status(500).json({ error: "Internal server error" });
+        sendError(res, "Internal server error", 500);
       }
 }
 
@@ -43,10 +41,10 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
     const { username, email, password } = req.body;
-
     const loginIdentifier = username || email; 
     if (!loginIdentifier || !password) {
-      res.status(400).json({ error: "Missing username/email or password" });
+      sendError(res, "Missing username/email or password", 400);
+      return;
     }
 
     const user = await User.findOne({
@@ -59,20 +57,21 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!user) {
-        res.status(401).json({ error: "Invalid credentials" });
-        return;
+      sendError(res, "Invalid credentials", 401);
+      return;
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      res.status(401).json({ error: "Invalid credentials" });
+      sendError(res, "Invalid credentials", 401);
+      return;
     }
 
     const token = jwt.sign({ userId: user.user_id }, secretKey, { expiresIn: "1h" });
 
-    res.json({ message: "Login successful", token });
+    sendResponse(res, { message: "Login successful", token });
   } catch (error) {
     console.error("Error logging in:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
 }

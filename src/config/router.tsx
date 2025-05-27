@@ -23,6 +23,7 @@ export const router = createBrowserRouter([
         <Layout />
       </ProtectedRoute>
     ),
+    loader: authenticate, 
     children: [
       {
         index: true,

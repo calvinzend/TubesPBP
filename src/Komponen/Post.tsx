@@ -3,6 +3,7 @@ import { FaRegComment } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
+import { api, fetchWithAuth } from "../../utils/api"; // gunakan helper
 
 interface PostProps {
   tweet_id: string;
@@ -16,7 +17,7 @@ interface PostProps {
   replyCount: number;
   createdAt: string;
   onOpenDetail?: (tweet_id: string) => void;
-  refreshThread?: () => Promise<void>; // <-- Add this line
+  refreshThread?: () => Promise<void>;
 }
 
 export const Post = ({
@@ -31,6 +32,7 @@ export const Post = ({
   replyCount,
   createdAt,
   onOpenDetail,
+  refreshThread,
 }: PostProps) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [likes, setLikes] = useState<number>(likeCount);
@@ -53,19 +55,16 @@ export const Post = ({
     }
   }, []);
 
+  // Like handler pakai helper
   const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:3000/like/${tweet_id}`, {
+      const response = await fetchWithAuth(`/like/${tweet_id}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
       });
-
       if (response.ok) {
         const data = await response.json();
         if (data.likes !== undefined) {
@@ -82,6 +81,7 @@ export const Post = ({
     }
   };
 
+  // Reply handler
   const handleReplySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) return;
@@ -93,18 +93,15 @@ export const Post = ({
     if (replyImage) formData.append("image_path", replyImage);
 
     try {
-      const response = await fetch(`http://localhost:3000/posts/${tweet_id}/replies`, {
+      const response = await fetchWithAuth(`/posts/${tweet_id}/replies`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
         body: formData,
       });
-
       if (response.ok) {
         setReplyContent("");
         setReplyImage(null);
         setShowReplyForm(false);
+        if (refreshThread) await refreshThread(); 
       }
     } catch (error) {
       console.error("Error submitting reply:", error);
@@ -136,13 +133,7 @@ export const Post = ({
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <img
-          src={
-            profilePicture
-              ? profilePicture.startsWith("http")
-                ? profilePicture
-                : `http://localhost:3000/${profilePicture}`
-              : "http://localhost:3000/uploads/default-profile.png"
-          }
+          src={api.getProfilePicture(profilePicture || "")}
           alt="profile"
           style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }}
         />
@@ -162,7 +153,9 @@ export const Post = ({
 
       {image_path && (
         <img
-          src={`http://localhost:3000/${image_path}`}
+          src={
+            api.getProfilePicture(image_path)
+          }
           alt="post image"
           style={{
             maxWidth: "100%",

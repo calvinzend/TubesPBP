@@ -3,6 +3,7 @@ import { ReplyType } from "../types/types";
 import { CiHeart } from "react-icons/ci";
 import { FaRegComment } from "react-icons/fa";
 import { TweetDetail } from "../pages/TweetDetail";
+import { api, fetchWithAuth } from "../../utils/api";
 
 interface ReplyProps {
   reply: ReplyType;
@@ -10,7 +11,7 @@ interface ReplyProps {
   userId: string | null;
   setReplies: React.Dispatch<React.SetStateAction<ReplyType[]>>;
   depth?: number;
-  refreshThread?: () => Promise<void>; // <-- Add this line
+  refreshThread?: () => Promise<void>;
 }
 
 export const Reply = ({
@@ -19,6 +20,7 @@ export const Reply = ({
   userId,
   setReplies,
   depth = 0,
+  refreshThread,
 }: ReplyProps) => {
   const [showReplies, setShowReplies] = useState(false);
   const [nestedReplies, setNestedReplies] = useState<ReplyType[]>([]);
@@ -32,14 +34,7 @@ export const Reply = ({
   // Fetch nested replies for this reply
   const fetchNestedReplies = async () => {
     try {
-      const response = await fetch(
-        `http://localhost:3000/posts/${reply.tweet_id}/replies`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await fetchWithAuth(`/posts/${reply.tweet_id}/replies`);
       const data = await response.json();
       setNestedReplies(data.replies || []);
     } catch (error) {
@@ -68,21 +63,16 @@ export const Reply = ({
     if (localReplyImage) formData.append("image_path", localReplyImage);
 
     try {
-      const response = await fetch(
-        `http://localhost:3000/posts/${parent_id}/replies`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetchWithAuth(`/posts/${parent_id}/replies`, {
+        method: "POST",
+        body: formData,
+      });
       if (response.ok) {
         setLocalReplyContent("");
         setLocalReplyImage(null);
         setShowReplyForm(false);
         fetchNestedReplies(); // Refresh nested replies after posting
+        if (refreshThread) await refreshThread(); // Refresh parent thread if needed
       }
     } catch (error) {
       console.error("Error submitting reply:", error);
@@ -93,12 +83,9 @@ export const Reply = ({
     e.stopPropagation();
     if (!userId) return;
     try {
-      const response = await fetch(`http://localhost:3000/like/${reply.tweet_id}`, {
+      const response = await fetchWithAuth(`/like/${reply.tweet_id}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
       });
 
@@ -148,13 +135,7 @@ export const Reply = ({
           }}
         >
           <img
-            src={
-              reply.user?.profilePicture
-                ? reply.user.profilePicture.startsWith("http")
-                  ? reply.user.profilePicture
-                  : `http://localhost:3000/${reply.user.profilePicture}`
-                : "http://localhost:3000/uploads/default-profile.png"
-            }
+            src={api.getProfilePicture(reply.user?.profilePicture || undefined)}
             alt="profile"
             style={{
               width: "32px",
@@ -186,7 +167,7 @@ export const Reply = ({
             )}
             {reply.image_path && (
               <img
-                src={`http://localhost:3000/${reply.image_path}`}
+                src={api.getProfilePicture(reply.image_path)}
                 alt="reply"
                 style={{
                   width: "120px",
@@ -291,6 +272,7 @@ export const Reply = ({
                         userId={userId}
                         setReplies={setNestedReplies}
                         depth={depth + 1}
+                        refreshThread={refreshThread}
                       />
                     ))
                 ) : (

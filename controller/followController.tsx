@@ -2,19 +2,18 @@ import { Request, Response } from "express";
 import { Follower } from "../models/Follower";
 import { User } from "../models/User";
 import { v4 as uuidv4 } from "uuid";
+import { sendResponse, sendError } from "../utils/response";
 
 // Get All User that Follow Specific User
 export const follower = async (req: Request, res: Response): Promise<void> => {
   try {
-    const {user_id} = req.params;
-
-    // Find all followers for the user (user_id)
+    const { user_id } = req.params;
     const followers = await Follower.findAll({
-      where: { following_id:user_id},
+      where: { following_id: user_id },
       include: [
         {
           model: User,
-          as: "followerUser", // The user who follows
+          as: "followerUser",
           attributes: ["user_id", "username", "name", "profilePicture"],
         },
       ],
@@ -38,10 +37,10 @@ export const follower = async (req: Request, res: Response): Promise<void> => {
       };
     });
 
-    res.status(200).json({ success: true, followers: formattedFollowers });
+    sendResponse(res, { followers: formattedFollowers });
   } catch (error) {
     console.error("Error fetching followers:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch followers" });
+    sendError(res, "Failed to fetch followers", 500);
   }
 };
 
@@ -49,14 +48,12 @@ export const follower = async (req: Request, res: Response): Promise<void> => {
 export const following = async (req: Request, res: Response): Promise<void> => {
   try {
     const { following_id } = req.params;
-
-    // Find all users this user is following
     const following = await Follower.findAll({
       where: { user_id: following_id },
       include: [
         {
           model: User,
-          as: "followedUser", // User being followed
+          as: "followedUser",
           attributes: ["user_id", "username", "name", "profilePicture"],
         },
       ],
@@ -80,26 +77,26 @@ export const following = async (req: Request, res: Response): Promise<void> => {
       };
     });
 
-    res.status(200).json({ success: true, following: formattedFollowing });
+    sendResponse(res, { following: formattedFollowing });
   } catch (error) {
     console.error("Error fetching following:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch following" });
+    sendError(res, "Failed to fetch following", 500);
   }
 };
 
 // Follow/unfollow endpoint
 export const addFollower = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user_id = req.user?.user_id; // The user who is following
-    const { following_id } = req.params; // The user being followed
+    const user_id = req.user?.user_id;
+    const { following_id } = req.params;
 
     if (!user_id) {
-      res.status(401).json({ error: "Unauthorized" });
+      sendError(res, "Unauthorized", 401);
       return;
     }
 
     if (user_id === following_id) {
-      res.status(400).json({ error: "A user cannot follow themselves." });
+      sendError(res, "A user cannot follow themselves.", 400);
       return;
     }
 
@@ -118,18 +115,16 @@ export const addFollower = async (req: Request, res: Response): Promise<void> =>
       action = "followed";
     }
 
-    // Get updated followers count for the followed user
     const followersCount = await Follower.count({ where: { following_id } });
-    // Check if the current user is following (should be false if just unfollowed, true if just followed)
     const isFollowing = action === "followed";
 
-    res.status(200).json({
+    sendResponse(res, {
       message: action === "followed" ? "Followed successfully" : "Unfollowed successfully",
       followersCount,
       isFollowing,
     });
   } catch (error) {
     console.error("Error in /follow:", error);
-    res.status(500).json({ error: "Internal server error" });
+    sendError(res, "Internal server error", 500);
   }
 };

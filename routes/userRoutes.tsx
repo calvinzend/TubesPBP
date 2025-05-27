@@ -1,7 +1,9 @@
 import { Router } from "express";
-import { allUser, userDetail, updateUser, deleteUser } from "../controller/userController";
+import { allUser, userDetail, updateUser, deleteUser, searchUser } from "../controller/userController";
 
 const router = Router();
+
+router.get("/users/search", searchUser);
 
 router.get("/users", allUser);
 
