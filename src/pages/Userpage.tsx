@@ -4,7 +4,8 @@ import { Post } from "../Komponen/Post";
 import { jwtDecode } from "jwt-decode";
 import { TweetDetail } from "./TweetDetail";
 import { api } from "../../utils/api";
-import { getProfilePicture } from "../../utils/profilePic";
+import gambar from "../../uploads/default-profile.png";
+
 
 interface DecodedToken {
   userId: string;
@@ -235,7 +236,7 @@ export const UserPage = () => {
           }}
         >
           <img
-            src={api.getProfilePicture(userData.profilePicture)}
+            src={api.getProfilePicture(userData.profilePicture || "uploads\\default-profile.png") || gambar}
             alt="profile"
             style={{
               width: "120px",
@@ -334,7 +335,7 @@ export const UserPage = () => {
               {followers.map(f => (
                 <li key={f.follower?.user_id || f.user_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
                   <img
-                    src={api.getProfilePicture(f.follower?.profilePicture)}
+                    src={api.getProfilePicture(f.follower?.profilePicture || "uploads\\default-profile.png")}
                     alt="profile"
                     style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
                   />

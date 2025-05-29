@@ -5,7 +5,8 @@ import { jwtDecode } from "jwt-decode";
 import { TweetDetail } from "./TweetDetail";
 import { postWithAuth, fetchWithAuth } from "../../utils/api"; // Import helper
 import { api } from "../../utils/api"; // Import api config
-import { getProfilePicture } from "../../utils/profilePic";
+import gambar from "../../uploads/default-profile.png";
+
 
 interface DecodedToken {
   userId: string;
@@ -96,15 +97,13 @@ export const HomePage = () => {
     fetchPosts();
   }, []);
 
-  console.log("userData:", userData?.user?.profilePicture);
-
 
 
   return (
     <div style={{ maxWidth: "100%", margin: "0" }}>
       <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
         <img
-          src={api.getProfilePicture(userData?.user?.profilePicture)}
+          src={api.getProfilePicture(userData?.user?.profilePicture || "uploads\\default-profile.png") || gambar}
           alt="profile"
           style={{
             width: "50px",
@@ -169,7 +168,7 @@ export const HomePage = () => {
             handle={`${post.user?.username || "unknown"}`}
             content={post.content}
             image_path={post.image_path || ""}
-            profilePicture={api.getProfilePicture(post.user?.profilePicture)}
+            profilePicture={api.getProfilePicture(post.user?.profilePicture || "uploads\\default-profile.png")}
             user_id={post.user?.user_id || ""}
             likeCount={Number(post.likeCount) || 0}
             replyCount={Number(post.replyCount) || 0}

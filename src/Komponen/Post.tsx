@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
 import { api, fetchWithAuth } from "../../utils/api";
-import { getProfilePicture } from "../../utils/profilePic";
+import gambar from "../../uploads/default-profile.png";
+
 
 interface PostProps {
   tweet_id: string;
@@ -134,7 +135,7 @@ export const Post = ({
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <img
-          src={getProfilePicture(profilePicture)}
+          src={api.getProfilePicture(profilePicture || "uploads\\default-profile.png")}
           alt="profile"
           style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }}
         />
