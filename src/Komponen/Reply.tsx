@@ -4,6 +4,7 @@ import { CiHeart } from "react-icons/ci";
 import { FaRegComment } from "react-icons/fa";
 import { TweetDetail } from "../pages/TweetDetail";
 import { api, fetchWithAuth } from "../../utils/api";
+import { getProfilePicture } from "../../utils/profilePic";
 
 interface ReplyProps {
   reply: ReplyType;
@@ -135,7 +136,7 @@ export const Reply = ({
           }}
         >
           <img
-            src={api.getProfilePicture(reply.user?.profilePicture || undefined)}
+            src={getProfilePicture(reply.user?.profilePicture)}
             alt="profile"
             style={{
               width: "32px",

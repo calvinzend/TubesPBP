@@ -3,7 +3,8 @@ import { FaRegComment } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
-import { api, fetchWithAuth } from "../../utils/api"; // gunakan helper
+import { api, fetchWithAuth } from "../../utils/api";
+import { getProfilePicture } from "../../utils/profilePic";
 
 interface PostProps {
   tweet_id: string;
@@ -133,7 +134,7 @@ export const Post = ({
     >
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <img
-          src={api.getProfilePicture(profilePicture || "")}
+          src={getProfilePicture(profilePicture)}
           alt="profile"
           style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover" }}
         />

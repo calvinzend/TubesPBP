@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import { Link } from "react-router-dom";
 import { api } from "../../utils/api";
+import { getProfilePicture } from "../../utils/profilePic";
 
 export const SearchPage = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -115,7 +116,7 @@ export const SearchPage = () => {
               }}
             >
               <img
-                src={api.getProfilePicture(user.profilePicture)}
+                src={getProfilePicture(user.profilePicture)}
                 alt="profile"
                 style={{
                   width: 48,

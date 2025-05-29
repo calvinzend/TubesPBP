@@ -4,6 +4,7 @@ import { Post } from "../Komponen/Post";
 import { Reply } from "../Komponen/Reply";
 import { ReplyType } from "../types/types";
 import { fetchWithAuth, putWithAuth, deleteWithAuth, api } from "../../utils/api";
+import { getProfilePicture } from "../../utils/profilePic";
 
 export const TweetDetail = ({ tweet_id: propTweetId }: { tweet_id?: string }) => {
   const params = useParams<{ tweet_id: string }>();
@@ -195,7 +196,7 @@ export const TweetDetail = ({ tweet_id: propTweetId }: { tweet_id?: string }) =>
           handle={tweet.user?.username || "unknown"}
           content={tweet.content}
           image_path={tweet.image_path}
-          profilePicture={tweet.user?.profilePicture}
+          profilePicture={getProfilePicture(tweet.user?.profilePicture)}
           user_id={tweet.user?.user_id}
           likeCount={Number(tweet.likeCount) || 0}
           replyCount={Number(tweet.replyCount) || 0}

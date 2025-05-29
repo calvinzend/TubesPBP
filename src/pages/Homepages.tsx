@@ -5,6 +5,7 @@ import { jwtDecode } from "jwt-decode";
 import { TweetDetail } from "./TweetDetail";
 import { postWithAuth, fetchWithAuth } from "../../utils/api"; // Import helper
 import { api } from "../../utils/api"; // Import api config
+import { getProfilePicture } from "../../utils/profilePic";
 
 interface DecodedToken {
   userId: string;
@@ -103,10 +104,7 @@ export const HomePage = () => {
     <div style={{ maxWidth: "100%", margin: "0" }}>
       <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
         <img
-          src={
-            api.getProfilePicture(userData?.user?.profilePicture) ||
-            userData?.user?.profilePicture
-          }
+          src={getProfilePicture(userData?.user?.profilePicture)}
           alt="profile"
           style={{
             width: "50px",
@@ -171,7 +169,7 @@ export const HomePage = () => {
             handle={`${post.user?.username || "unknown"}`}
             content={post.content}
             image_path={post.image_path || ""}
-            profilePicture={api.getProfilePicture(post.user?.profilePicture || "")}
+            profilePicture={getProfilePicture(post.user?.profilePicture)}
             user_id={post.user?.user_id || ""}
             likeCount={Number(post.likeCount) || 0}
             replyCount={Number(post.replyCount) || 0}
