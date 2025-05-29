@@ -158,7 +158,7 @@ export const Post = ({
           }
           alt="post image"
           style={{
-            maxWidth: "100%",
+            maxWidth: "80%",
             maxHeight: 400,
             borderRadius: 8,
             marginLeft: 60,

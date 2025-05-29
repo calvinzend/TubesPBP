@@ -10,10 +10,10 @@ import { TweetDetail } from "../pages/TweetDetail";
 
 const authenticate = () => {
   const token = localStorage.getItem("token");
-  if (!token) { 
+  if (!token) {
     return redirect("/login");
   }
-};    
+};
 
 export const router = createBrowserRouter([
   {
@@ -23,41 +23,15 @@ export const router = createBrowserRouter([
         <Layout />
       </ProtectedRoute>
     ),
-    loader: authenticate, 
+    loader: authenticate,
     children: [
-      {
-        index: true,
-        element: <HomePage />,
-        loader: authenticate,
-      },
-      {
-        path: "search",
-        element: <SearchPage />,
-        loader: authenticate,
-      },
-      {
-        path: "userpage",
-        element: <UserPage />,
-        loader: authenticate,
-      },
-      {
-        path: "userpage/:id",
-        element: <UserPage />,
-        loader: authenticate,
-      },
-      {
-        path: "tweet/:tweet_id",
-        element: <TweetDetail />,
-        loader: authenticate,
-      }
+      { index: true, element: <HomePage />, loader: authenticate },
+      { path: "search", element: <SearchPage />, loader: authenticate },
+      { path: "userpage", element: <UserPage />, loader: authenticate },
+      { path: "userpage/:id", element: <UserPage />, loader: authenticate },
+      { path: "tweet/:tweet_id", element: <TweetDetail />, loader: authenticate },
     ],
   },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
-  },
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
 ]);
