@@ -15,6 +15,7 @@ import { User } from "./models/User";
 import { Tweet } from "./models/Tweet";
 import { Likes } from "./models/Likes";
 import { Follower } from "./models/Follower";
+import { logger } from "./middware/logging"
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+app.use(logger);
 app.use(authenticate);
 
 app.use( authRoutes);

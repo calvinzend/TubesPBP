@@ -18,6 +18,13 @@ export const register = async (req: Request, res: Response): Promise<void> => {
           sendError(res, "Semua field wajib diisi!", 400);
           return;
         }
+
+        // Check if email already exists
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+          sendError(res, "Email sudah digunakan!", 400);
+          return;
+        }
     
         const hashedPassword = await bcrypt.hash(password, 10);
     
