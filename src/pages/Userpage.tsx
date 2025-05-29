@@ -235,7 +235,7 @@ export const UserPage = () => {
           }}
         >
           <img
-            src={getProfilePicture(userData.profilePicture)}
+            src={api.getProfilePicture(userData.profilePicture)}
             alt="profile"
             style={{
               width: "120px",
@@ -311,7 +311,7 @@ export const UserPage = () => {
               handle={`${userData.username}`}
               content={post.content}
               image_path={post.image_path || ""}
-              profilePicture={getProfilePicture(userData.profilePicture)}
+              profilePicture={api.getProfilePicture(userData.profilePicture)}
               user_id={userData.user_id}
               likeCount={Number(post.likeCount) || 0}
               replyCount={Number(post.replyCount) || 0}
@@ -334,7 +334,7 @@ export const UserPage = () => {
               {followers.map(f => (
                 <li key={f.follower?.user_id || f.user_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
                   <img
-                    src={getProfilePicture(f.follower?.profilePicture)}
+                    src={api.getProfilePicture(f.follower?.profilePicture)}
                     alt="profile"
                     style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
                   />
@@ -365,7 +365,7 @@ export const UserPage = () => {
               {following.map(f => (
                 <li key={f.following?.user_id || f.following_id} style={{ marginBottom: "10px", display: "flex", alignItems: "center" }}>
                   <img
-                    src={getProfilePicture(f.following?.profilePicture)}
+                    src={api.getProfilePicture(f.following?.profilePicture)}
                     alt="profile"
                     style={{ width: "40px", height: "40px", borderRadius: "50%", marginRight: "10px" }}
                   />

@@ -66,6 +66,8 @@ export const TweetDetail = ({ tweet_id: propTweetId }: { tweet_id?: string }) =>
     fetchThread();
   };
 
+  // console.log("Tweet detail:", tweet.user.profilePicture);
+
   if (!tweet) return <div style={{ color: "#fff" }}>Loading...</div>;
 
   return (
@@ -196,7 +198,7 @@ export const TweetDetail = ({ tweet_id: propTweetId }: { tweet_id?: string }) =>
           handle={tweet.user?.username || "unknown"}
           content={tweet.content}
           image_path={tweet.image_path}
-          profilePicture={getProfilePicture(tweet.user?.profilePicture)}
+          profilePicture={api.getProfilePicture(tweet.user?.profilePicture)}
           user_id={tweet.user?.user_id}
           likeCount={Number(tweet.likeCount) || 0}
           replyCount={Number(tweet.replyCount) || 0}

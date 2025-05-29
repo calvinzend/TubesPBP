@@ -104,7 +104,7 @@ export const HomePage = () => {
     <div style={{ maxWidth: "100%", margin: "0" }}>
       <div style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "10px" }}>
         <img
-          src={getProfilePicture(userData?.user?.profilePicture)}
+          src={api.getProfilePicture(userData?.user?.profilePicture)}
           alt="profile"
           style={{
             width: "50px",
@@ -169,7 +169,7 @@ export const HomePage = () => {
             handle={`${post.user?.username || "unknown"}`}
             content={post.content}
             image_path={post.image_path || ""}
-            profilePicture={getProfilePicture(post.user?.profilePicture)}
+            profilePicture={api.getProfilePicture(post.user?.profilePicture)}
             user_id={post.user?.user_id || ""}
             likeCount={Number(post.likeCount) || 0}
             replyCount={Number(post.replyCount) || 0}

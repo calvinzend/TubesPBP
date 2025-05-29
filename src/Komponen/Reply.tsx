@@ -136,7 +136,7 @@ export const Reply = ({
           }}
         >
           <img
-            src={getProfilePicture(reply.user?.profilePicture)}
+            src={reply.user?.profilePicture ? api.getProfilePicture(reply.user.profilePicture) : getProfilePicture()}
             alt="profile"
             style={{
               width: "32px",

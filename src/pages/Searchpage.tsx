@@ -116,7 +116,7 @@ export const SearchPage = () => {
               }}
             >
               <img
-                src={getProfilePicture(user.profilePicture)}
+                src={api.getProfilePicture(user.profilePicture)}
                 alt="profile"
                 style={{
                   width: 48,

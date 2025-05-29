@@ -24,7 +24,7 @@ router.get("/posts/:tweet_id/replies", [param("tweet_id").isString().withMessage
 router.post(
   "/posts/:tweet_id/replies",
   upload.single("image_path"),
-  [param("tweet_id").isString().withMessage("Tweet ID must be a string"), body("content").notEmpty().withMessage("Content is required")],
+  [param("tweet_id").isString().withMessage("Tweet ID must be a string")],
   validateRequest,
   createReply
 );

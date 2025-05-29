@@ -28,7 +28,6 @@ router.get("/posts/:tweet_id/thread", [param("tweet_id").isString().withMessage(
 router.post(
   "/posts",
   upload.single("image"),
-  [body("content").notEmpty().withMessage("Content is required")],
   validateRequest,
   createPost
 );
